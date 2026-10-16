@@ -36,12 +36,29 @@ __all__ = [
     "fill_shape",
     "ink",
     "ink_loop",
+    "set_looseness",
+    "looseness",
 ]
 
 
 def seed_of(name: str) -> int:
     """Stable across processes, unlike ``hash()``."""
     return zlib.crc32(name.encode("utf-8")) & 0xFFFFFFFF
+
+
+# How loose the pen is. 1.0 is the house style; 0.0 draws the exact same
+# geometry as clean vector art, which is how the "scribbly vs. tidy" question
+# gets answered without redrawing a single shape.
+_LOOSENESS = 1.0
+
+
+def set_looseness(value: float) -> None:
+    global _LOOSENESS
+    _LOOSENESS = max(0.0, float(value))
+
+
+def looseness() -> float:
+    return _LOOSENESS
 
 
 class Pen:
@@ -147,7 +164,7 @@ def wobble(pts: Sequence[Point], name: str, amp: float = 1.8, closed: bool = Fal
     out = []
     for i, (x, y) in enumerate(pts):
         t = i / n if closed else i / (n - 1)
-        offset = (pen.loop(t) if closed else pen.drift(t)) * amp
+        offset = (pen.loop(t) if closed else pen.drift(t)) * amp * _LOOSENESS
         out.append((x + normals[i][0] * offset, y + normals[i][1] * offset))
     return out
 
@@ -176,7 +193,8 @@ def ink(pts: Sequence[Point], width: float, name: str, *,
     for i in range(n):
         t = i / (n - 1)
         envelope = 1.0 if taper <= 0 else max(0.10, min(1.0, t / taper, (1 - t) / taper)) ** 0.55
-        half.append(max(0.55, width / 2 * envelope * (1.0 + jitter * pen.drift(t * 1.7))))
+        half.append(max(0.55, width / 2 * envelope
+                        * (1.0 + jitter * _LOOSENESS * pen.drift(t * 1.7))))
     left = [(pts[i][0] + normals[i][0] * half[i], pts[i][1] + normals[i][1] * half[i]) for i in range(n)]
     right = [(pts[i][0] - normals[i][0] * half[i], pts[i][1] - normals[i][1] * half[i]) for i in range(n)]
 
@@ -203,7 +221,7 @@ def ink_loop(pts: Sequence[Point], width: float, name: str, *,
     pen = Pen(seed_of(name + ":loop"))
     n = len(pts)
     normals = normals_of(pts, True)
-    half = [width / 2 * (1.0 + jitter * pen.loop(i / n)) for i in range(n)]
+    half = [width / 2 * (1.0 + jitter * _LOOSENESS * pen.loop(i / n)) for i in range(n)]
     left = [(pts[i][0] + normals[i][0] * half[i], pts[i][1] + normals[i][1] * half[i]) for i in range(n)]
     right = [(pts[i][0] - normals[i][0] * half[i], pts[i][1] - normals[i][1] * half[i]) for i in range(n)]
     return (f'<path d="{poly_path(left)} {poly_path(right)}" fill="{colour}" '
