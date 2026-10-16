@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from . import PIPELINE_VERSION
+from . import handdraw
 from .animate import (
     animation_signature,
     has_animated_content,
@@ -240,6 +241,20 @@ def _copy_if_changed(source: Path, destination: Path) -> None:
     shutil.copy2(source, destination)
 
 
+def art_style_key(scene: dict[str, Any], project: dict[str, Any]) -> Optional[list[str]]:
+    """Style fingerprint for the clip cache, or ``None`` for the default style.
+
+    Animated clips are composited from a base image that holds no characters,
+    so the drawing style never reaches ``image_key``. Without this the cache
+    would happily serve a hand-drawn clip to a line-style project — or the
+    reverse. ``None`` keeps existing default-style cache entries valid.
+    """
+    styles = [handdraw.art_style_for(item, project) for item in scene.get("characters", [])]
+    if any(style != handdraw.DEFAULT_STYLE for style in styles):
+        return styles
+    return None
+
+
 def build_project(
     project_path: str,
     *,
@@ -395,6 +410,9 @@ def build_project(
             "oversample": scene_oversample,
             "pipeline": PIPELINE_VERSION,
         }
+        style_key = art_style_key(scene, project)
+        if style_key is not None:
+            clip_signature["art_style"] = style_key
         frame_count = 0
         frame_pattern = scene_dir / f"frames_{scene_id}" / "frame_%04d.png"
         if animated:
