@@ -12,12 +12,13 @@ from typing import Any
 
 # Props without any text can be rasterised per frame without loading fonts.
 # node/bubble carry labels, so they stay on the static layer.
-ANIMATED_PROP_TYPES = ("arrow", "star", "cross", "arc", "mirror")
+PROP_PRESETS = ("none", "pop", "grow")
+PROP_DEFAULTS: dict[str, Any] = {"preset": "none", "start": 0.0, "duration": 0.45}
 ENTER_PRESETS = ("walk_in", "slide_in", "pop_in")
 
 # Bump whenever the frame generation changes shape (layer split, easing, limb
 # maths). It is part of the clip cache key, so stale clips cannot be reused.
-ANIMATION_VERSION = 3
+ANIMATION_VERSION = 4
 
 BACKGROUND_RECT = '<rect width="1280" height="720"'
 
@@ -115,12 +116,41 @@ def character_animation(character: dict[str, Any]) -> dict[str, Any]:
     return settings
 
 
+def prop_animation(prop: dict[str, Any]) -> dict[str, Any]:
+    raw = prop.get("animation")
+    settings = dict(PROP_DEFAULTS)
+    if isinstance(raw, dict):
+        settings.update({key: value for key, value in raw.items() if key in PROP_DEFAULTS})
+    if settings["preset"] not in PROP_PRESETS:
+        settings["preset"] = "none"
+    return settings
+
+
+def prop_is_animated(prop: dict[str, Any]) -> bool:
+    return prop_animation(prop)["preset"] != "none"
+
+
+def prop_state(prop: dict[str, Any], t: float) -> dict[str, Any]:
+    """Visibility, scale and grow progress of one prop at time ``t``."""
+    settings = prop_animation(prop)
+    preset = settings["preset"]
+    if preset == "none":
+        return {"visible": True, "scale": 1.0, "grow": 1.0}
+    advanced = progress(t, settings["start"], settings["duration"])
+    if preset == "pop":
+        return {"visible": advanced > 0, "scale": ease_out_back(advanced) if advanced > 0 else 0.0,
+                "grow": advanced}
+    return {"visible": advanced > 0, "scale": 1.0, "grow": ease_out_cubic(advanced)}
+
+
 def has_animated_content(scene: dict[str, Any]) -> bool:
     """True when this scene needs one render per frame."""
     settings = scene_animation(scene)
     if settings is None:
         return False
     if settings["blink"]:
+        return True
+    if any(prop_is_animated(item) for item in scene.get("props", [])):
         return True
     return any(
         character_animation(item)["preset"] != "none"
@@ -134,6 +164,7 @@ def animation_signature(scene: dict[str, Any]) -> dict[str, Any]:
         "version": ANIMATION_VERSION,
         "scene": scene_animation(scene),
         "characters": [character_animation(item) for item in scene.get("characters", [])],
+        "props": [prop_animation(item) for item in scene.get("props", [])],
     }
 
 
@@ -144,11 +175,11 @@ def split_layers(scene: dict[str, Any], project: dict[str, Any]) -> tuple[dict[s
     system font scan, which is what makes per-frame rendering affordable.
     """
     shared = {key: value for key, value in scene.items() if key not in ("characters", "props")}
-    animated_props = [item for item in scene.get("props", []) if item.get("type") in ANIMATED_PROP_TYPES]
+    animated_props = [item for item in scene.get("props", []) if prop_is_animated(item)]
 
     base = dict(shared)
     base["background_style"] = _backdrop(scene, project, characters=False)
-    base["props"] = [item for item in scene.get("props", []) if item.get("type") not in ANIMATED_PROP_TYPES]
+    base["props"] = [item for item in scene.get("props", []) if not prop_is_animated(item)]
     base["characters"] = []
 
     layer = dict(shared)

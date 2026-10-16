@@ -6,13 +6,16 @@ from pathlib import Path
 from typing import Any, Union
 from urllib.parse import urlparse
 
+from .svg import ICONS
 from .tts import DEFAULT_DASHSCOPE_ENDPOINT
 
 
 ALLOWED_POSES = {"stand", "look_down", "point", "arms_up", "think", "walk"}
 ALLOWED_EXPRESSIONS = {"neutral", "smile", "confused", "surprised", "sad", "angry"}
 ALLOWED_CAMERAS = {"static", "zoom_in", "zoom_out", "pan_left", "pan_right"}
-ALLOWED_PROPS = {"arrow", "cross", "bubble", "node", "mirror", "arc", "star"}
+ALLOWED_PROPS = {"arrow", "cross", "bubble", "node", "mirror", "arc", "star", "icon", "exchange"}
+ALLOWED_PROP_PRESETS = {"none", "pop", "grow"}
+PROP_ANIMATION_KEYS = {"preset", "start", "duration"}
 ALLOWED_ANIMATION_PRESETS = {"none", "walk_in", "slide_in", "pop_in"}
 SCENE_ANIMATION_KEYS = {"enabled", "blink", "blink_period", "oversample", "walk_cycle"}
 CHARACTER_ANIMATION_KEYS = {"preset", "start", "duration", "from_x", "walk_speed", "walk_cycle", "blink"}
@@ -242,8 +245,26 @@ def validate(project: dict[str, Any], scenes: Any, project_dir: Path) -> None:
             )
 
         for prop_index, prop in enumerate(scene.get("props", [])):
+            prop_prefix = f"{prefix}.props[{prop_index}]"
             if prop.get("type") not in ALLOWED_PROPS:
-                errors.append(f"{prefix}.props[{prop_index}].type is unsupported")
+                errors.append(f"{prop_prefix}.type is unsupported: {prop.get('type')}")
+            elif prop.get("type") == "icon" and prop.get("name") not in ICONS:
+                errors.append(
+                    f"{prop_prefix}.name is not a known icon: {prop.get('name')} "
+                    f"(available: {', '.join(sorted(ICONS))})"
+                )
+            prop_animation = prop.get("animation")
+            if prop_animation is not None:
+                if not isinstance(prop_animation, dict):
+                    errors.append(f"{prop_prefix}.animation must be an object")
+                else:
+                    for key, item in prop_animation.items():
+                        if key not in PROP_ANIMATION_KEYS:
+                            errors.append(f"{prop_prefix}.animation.{key} is not supported")
+                        elif key == "preset" and item not in ALLOWED_PROP_PRESETS:
+                            errors.append(f"{prop_prefix}.animation.preset is not supported: {item}")
+                        elif key != "preset" and (not isinstance(item, (int, float)) or item < 0):
+                            errors.append(f"{prop_prefix}.animation.{key} must be zero or greater")
 
         _backdrop(scene.get("background_style"), f"{prefix}.background_style", errors)
         paper_shape = scene.get("paper_shape")

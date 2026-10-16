@@ -4,7 +4,7 @@ import math
 from html import escape
 from typing import Any, Optional
 
-from .animate import character_state, scene_animation
+from .animate import character_state, prop_state, scene_animation
 
 
 VIEW_WIDTH = 1280
@@ -267,6 +267,8 @@ def character_svg(
 def _arrow(prop: dict[str, Any]) -> str:
     x1, y1 = _num(prop.get("x1"), 300), _num(prop.get("y1"), 350)
     x2, y2 = _num(prop.get("x2"), 800), _num(prop.get("y2"), 350)
+    grow = _num(prop.get("_grow"), 1.0)
+    x2, y2 = x1 + (x2 - x1) * grow, y1 + (y2 - y1) * grow
     color = escape(str(prop.get("color", "#45A95A")), quote=True)
     width = _num(prop.get("width"), 18)
     return f'''
@@ -340,6 +342,127 @@ def _star(prop: dict[str, Any]) -> str:
     return f'<path transform="translate({x:g} {y:g}) scale({scale:g})" d="M0-42 L12-13 L43-13 L18 6 L27 37 L0 19 L-27 37 L-18 6 L-43-13 L-12-13Z" fill="{color}"/>'
 
 
+# --- minimal hand-drawn object icons ---------------------------------------
+# Every icon lives inside a 0..100 box centred on the origin and is drawn with
+# the same ink weight as the characters, so an icon reads as part of the same
+# drawing instead of a pasted sticker. Text-free by construction: icons must be
+# rasterisable on the transparent animation layer without a font scan.
+ICON_BOX = 100.0
+# On-screen stroke weights: icons take the same pen as the characters
+# (a character is drawn at ~0.65 scale with a 12px pen, i.e. ~8px on screen),
+# and the widths are divided by the icon scale so bigger icons do not get
+# heavier lines.
+_ICON_INK = 8.0
+_ICON_THIN = 5.0
+_LINE = 'fill="none" stroke="{color}" stroke-width="{ink}" stroke-linecap="round" stroke-linejoin="round"'
+_THIN_LINE = 'fill="none" stroke="{color}" stroke-width="{thin}" stroke-linecap="round" stroke-linejoin="round"'
+_SHAPE = 'stroke="{color}" stroke-width="{ink}" stroke-linecap="round" stroke-linejoin="round"'
+
+ICONS: dict[str, dict[str, str]] = {
+    "sheep": {
+        "fill": "#F6F3EC",
+        "body": (
+            # woolly body
+            f'<path d="M-28 14 Q-42 12 -39 -1 Q-46 -15 -28 -19 Q-24 -32 -6 -29 '
+            f'Q9 -38 21 -26 Q38 -24 35 -8 Q45 4 28 14 Z" {_SHAPE}/>'
+            # head, horn, ear
+            f'<circle cx="-41" cy="-13" r="14" {_SHAPE}/>'
+            f'<path d="M-48 -25 Q-62 -34 -55 -47" {_LINE}/>'
+            f'<path d="M-33 -24 Q-27 -34 -17 -35" {_LINE}/>'
+            # legs
+            f'<path d="M-22 14 L-22 44 M-6 14 L-6 44 M12 14 L12 44 M26 14 L26 44" {_LINE}/>'
+            f'<circle cx="-45" cy="-14" r="2.6" fill="#171717"/>'
+        ),
+    },
+    "rice": {
+        "fill": "#FFFFFF",
+        "body": (
+            # heaped rice, a warmer tone than the bowl so it reads as a mound
+            '<path d="M-31 2 Q0 -42 31 2 Z" fill="#F7E7C8" stroke="{color}" '
+            'stroke-width="{ink}" stroke-linecap="round" stroke-linejoin="round"/>'
+            # bowl
+            '<path d="M-42 2 L42 2 Q36 45 0 45 Q-36 45 -42 2 Z" fill="#FFFFFF" '
+            'stroke="{color}" stroke-width="{ink}" stroke-linecap="round" stroke-linejoin="round"/>'
+            # grains
+            '<circle cx="-11" cy="-13" r="3.2" fill="#FFFFFF"/>'
+            '<circle cx="2" cy="-20" r="3.2" fill="#FFFFFF"/>'
+            '<circle cx="14" cy="-11" r="3.2" fill="#FFFFFF"/>'
+        ),
+    },
+    "fish": {
+        "fill": "#BBDCEC",
+        "body": (
+            f'<path d="M-34 0 Q-6 -30 24 -16 Q38 -8 44 0 Q38 8 24 16 Q-6 30 -34 0 Z" {_SHAPE}/>'
+            f'<path d="M-34 0 L-58 -20 L-58 20 Z" {_SHAPE}/>'
+            f'<path d="M4 -14 Q10 0 4 14" {_THIN_LINE}/>'
+            '<circle cx="22" cy="-5" r="3.4" fill="#171717"/>'
+        ),
+    },
+    "shoes": {
+        "fill": "#E7DACB",
+        "body": (
+            # upper: heel -> ankle opening -> toe
+            f'<path d="M-42 20 L-36 -8 Q-34 -18 -22 -18 Q-10 -18 -4 -6 L10 12 '
+            f'Q20 19 44 20 Z" {_SHAPE}/>'
+            # sole
+            f'<path d="M-46 20 L46 20 Q48 32 36 32 L-36 32 Q-48 32 -46 20 Z" {_SHAPE}/>'
+            # lace
+            f'<path d="M-28 -16 L-14 -2 M-18 -18 L-6 -6" {_THIN_LINE}/>'
+        ),
+    },
+}
+
+
+def _icon(prop: dict[str, Any]) -> str:
+    """A flat object icon; ``size`` is the box width in scene units."""
+    icon = ICONS.get(str(prop.get("name", "")))
+    if icon is None:
+        return ""
+    x, y = _num(prop.get("x"), 640), _num(prop.get("y"), 300)
+    scale = _num(prop.get("size"), 130) / ICON_BOX * _num(prop.get("scale"), 1)
+    rotation = _num(prop.get("rotation"), 0)
+    fill = escape(str(prop.get("color", icon.get("fill", "#FFFFFF"))), quote=True)
+    body = icon["body"].format(
+        color=INK,
+        ink=f"{_ICON_INK / scale:.3f}",
+        thin=f"{_ICON_THIN / scale:.3f}",
+    )
+    return (
+        f'<g transform="translate({x:g} {y:g}) rotate({rotation:g}) scale({scale:g})">'
+        f'<g fill="{fill}">{body}</g></g>'
+    )
+
+
+def _exchange(prop: dict[str, Any]) -> str:
+    """Double-headed arrow: trade and reciprocity, never a one-way flow."""
+    x1, y1 = _num(prop.get("x1"), 430), _num(prop.get("y1"), 300)
+    x2, y2 = _num(prop.get("x2"), 850), _num(prop.get("y2"), 300)
+    color = escape(str(prop.get("color", "#45A95A")), quote=True)
+    width = _num(prop.get("width"), 14)
+    grow = _num(prop.get("_grow"), 1.0)
+    x2, y2 = x1 + (x2 - x1) * grow, y1 + (y2 - y1) * grow
+    dx, dy = x2 - x1, y2 - y1
+    length = math.hypot(dx, dy) or 1.0
+    ux, uy = dx / length, dy / length
+    head = min(length / 2.6, width * 2.2)
+    half = width * 0.9
+
+    def tip(px: float, py: float, sign: float) -> str:
+        base_x, base_y = px - sign * head * ux, py - sign * head * uy
+        nx, ny = -uy * half, ux * half
+        return (
+            f'<path d="M{px:g} {py:g} L{base_x + nx:g} {base_y + ny:g} '
+            f'L{base_x - nx:g} {base_y - ny:g} Z" fill="{color}"/>'
+        )
+
+    return (
+        f'<path d="M{x1 + head * ux:g} {y1 + head * uy:g} L{x2 - head * ux:g} {y2 - head * uy:g}" '
+        f'fill="none" stroke="{color}" stroke-width="{width:g}" stroke-linecap="round"/>'
+        + tip(x1, y1, 1.0)
+        + tip(x2, y2, -1.0)
+    )
+
+
 PROP_RENDERERS = {
     "arrow": _arrow,
     "cross": _cross,
@@ -348,6 +471,8 @@ PROP_RENDERERS = {
     "mirror": _mirror,
     "arc": _arc,
     "star": _star,
+    "icon": _icon,
+    "exchange": _exchange,
 }
 
 
@@ -371,7 +496,18 @@ def render_scene_svg(
     connections = []
     for connection in scene.get("connections", []):
         connections.append(_arrow(connection))
-    props = [PROP_RENDERERS[item["type"]](item) for item in scene.get("props", [])]
+    props = []
+    for item in scene.get("props", []):
+        render_item = item
+        if time is not None:
+            state = prop_state(item, time)
+            if not state["visible"]:
+                continue
+            if state["scale"] != 1.0 or state["grow"] < 1.0:
+                render_item = {**item, "_grow": state["grow"]}
+                if state["scale"] != 1.0:
+                    render_item["scale"] = _num(item.get("scale"), 1.0) * state["scale"]
+        props.append(PROP_RENDERERS[render_item["type"]](render_item))
     characters = [
         character_svg(item, time, animation, order)
         for order, item in enumerate(scene.get("characters", []))

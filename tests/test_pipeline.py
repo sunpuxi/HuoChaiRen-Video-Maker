@@ -14,6 +14,7 @@ from pipeline.animate import (
     ANIMATION_VERSION,
     animation_signature,
     has_animated_content,
+    prop_state,
     split_layers,
     strip_background,
 )
@@ -31,7 +32,7 @@ from pipeline.media import (
     validate_video,
 )
 from pipeline.subtitles import write_ass, write_srt
-from pipeline.svg import PAPER_SHAPES, render_scene_svg
+from pipeline.svg import ICONS, PAPER_SHAPES, render_scene_svg
 from pipeline.tts import TTSError, synthesize_dashscope_qwen3, tts_cache_signature
 
 
@@ -533,6 +534,8 @@ class AnimationTests(unittest.TestCase):
     """Per-frame animation must be opt-in, deterministic and layer-safe."""
 
     PROJECT = {"background": "#FFFDF7", "background_style": {"enabled": True}}
+    # No backdrop: prop assertions then only see the props themselves.
+    PLAIN = {"background": "#FFFDF7"}
     SCENE = {
         "id": "walk",
         "title": "走路",
@@ -613,6 +616,77 @@ class AnimationTests(unittest.TestCase):
         self.assertNotIn('<rect width="1280" height="720"', layer_svg)  # layer must not,
         self.assertNotIn("<text", layer_svg)                            # or it hides the base
         self.assertEqual(strip_background("<svg></svg>"), "<svg></svg>")
+
+    def test_props_animate_on_the_layer_not_the_base(self) -> None:
+        scene = copy.deepcopy(self.SCENE)
+        scene["props"] = [
+            {"type": "icon", "name": "sheep", "x": 300, "y": 300,
+             "animation": {"preset": "pop", "start": 0.2}},
+            {"type": "icon", "name": "rice", "x": 900, "y": 300},
+        ]
+        base, layer = split_layers(scene, self.PROJECT)
+        self.assertEqual([p["name"] for p in base["props"]], ["rice"])
+        self.assertEqual([p["name"] for p in layer["props"]], ["sheep"])
+        self.assertTrue(has_animated_content(scene))
+
+    def test_prop_pop_starts_hidden_and_overshoots(self) -> None:
+        prop = {"type": "icon", "name": "fish", "animation": {"preset": "pop", "start": 1.0, "duration": 0.5}}
+        self.assertFalse(prop_state(prop, 0.5)["visible"])
+        middle = prop_state(prop, 1.35)["scale"]
+        self.assertGreater(middle, 1.0)          # ease-out-back overshoots
+        self.assertAlmostEqual(prop_state(prop, 3.0)["scale"], 1.0, places=6)
+
+    def test_prop_grow_shortens_the_arrow(self) -> None:
+        scene = copy.deepcopy(self.SCENE)
+        scene["characters"] = []
+        scene["props"] = [{"type": "exchange", "x1": 400, "y1": 300, "x2": 800, "y2": 300,
+                           "animation": {"preset": "grow", "start": 0.5, "duration": 0.5}}]
+
+        def bar_end(time: float) -> float:
+            svg = render_scene_svg(scene, self.PLAIN, index=0, time=time)
+            return float(re.search(r'<path d="M[\d.]+ 300 L([\d.]+) 300"', svg).group(1))
+
+        self.assertLess(bar_end(0.75), bar_end(2.0))   # still growing
+        self.assertAlmostEqual(bar_end(2.0), 800 - 30.8, places=1)  # full length minus the head
+
+    def test_exchange_draws_two_arrowheads_without_markers(self) -> None:
+        scene = copy.deepcopy(self.SCENE)
+        scene["characters"] = []
+        scene["props"] = [{"type": "exchange", "x1": 400, "y1": 300, "x2": 800, "y2": 300}]
+        svg = render_scene_svg(scene, self.PLAIN, index=0)
+        self.assertEqual(svg.count("<path"), 3)   # bar + two heads
+        self.assertNotIn("marker-end", svg)
+
+    def test_icon_stroke_stays_constant_across_sizes(self) -> None:
+        def width(size: float) -> float:
+            scene = copy.deepcopy(self.SCENE)
+            scene["characters"] = []
+            scene["props"] = [{"type": "icon", "name": "sheep", "x": 640, "y": 300, "size": size}]
+            svg = render_scene_svg(scene, self.PLAIN, index=0)
+            return float(re.search(r'stroke-width="([0-9.]+)"', svg).group(1))
+        # the pen width is divided by the scale, so it shrinks as the icon grows
+        self.assertGreater(width(80), width(200))
+
+    def test_every_registered_icon_renders(self) -> None:
+        for name in ICONS:
+            scene = copy.deepcopy(self.SCENE)
+            scene["characters"] = []
+            scene["props"] = [{"type": "icon", "name": name, "x": 640, "y": 300}]
+            self.assertIn("<path", render_scene_svg(scene, self.PROJECT, index=0))
+
+    def test_unknown_icon_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "project.json").write_text(
+                json.dumps({"resolution": [1280, 720], "fps": 30, "preview": {"resolution": [640, 360], "fps": 12}}),
+                encoding="utf-8",
+            )
+            (root / "storyboard.json").write_text(
+                json.dumps([{"id": "bad", "duration": 2, "props": [{"type": "icon", "name": "dragon"}]}]),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "known icon"):
+                resolve_project(root)
 
     def test_animated_scene_is_detected(self) -> None:
         self.assertTrue(has_animated_content(self.SCENE))
