@@ -9,7 +9,18 @@ from pathlib import Path
 from unittest.mock import patch
 
 from pipeline.config import resolve_project
-from pipeline.media import _video_filter, compose_pcm_audio, duration
+from pipeline.media import (
+    _video_filter,
+    align_duration_to_frames,
+    compose_pcm_audio,
+    concatenate,
+    duration,
+    frame_rate_tolerance,
+    probe,
+    render_scene_clip,
+    run,
+    validate_video,
+)
 from pipeline.subtitles import write_ass, write_srt
 from pipeline.tts import TTSError, synthesize_dashscope_qwen3, tts_cache_signature
 
@@ -297,6 +308,127 @@ class TTSTests(unittest.TestCase):
         )
         self.assertEqual(signature["voice"], "Elias")
         self.assertNotIn("api_key_env", signature)
+
+
+class VideoTimelineTests(unittest.TestCase):
+    """Short outputs used to be rejected for a sub-frame timing artefact."""
+
+    WIDTH = 320
+    HEIGHT = 180
+    FPS = 12
+
+    @staticmethod
+    def _still(path: Path) -> Path:
+        run(
+            [
+                "ffmpeg",
+                "-hide_banner",
+                "-loglevel",
+                "error",
+                "-y",
+                "-f",
+                "lavfi",
+                "-i",
+                "color=c=white:s=320x180",
+                "-frames:v",
+                "1",
+                str(path),
+            ]
+        )
+        return path
+
+    @staticmethod
+    def _frames(path: Path) -> int:
+        stream = next(
+            item for item in probe(path)["streams"] if item.get("codec_type") == "video"
+        )
+        return int(stream["nb_frames"])
+
+    def test_align_duration_snaps_up_to_frame_grid(self) -> None:
+        self.assertAlmostEqual(align_duration_to_frames(2.87, 12), 35 / 12, places=6)
+        self.assertAlmostEqual(align_duration_to_frames(2.9, 12), 35 / 12, places=6)
+        # Already aligned durations must stay untouched to keep caches warm.
+        self.assertAlmostEqual(align_duration_to_frames(4.5, 12), 4.5, places=6)
+        self.assertAlmostEqual(align_duration_to_frames(3.0, 30), 3.0, places=6)
+        # A clip always keeps at least one frame.
+        self.assertAlmostEqual(align_duration_to_frames(0.0, 12), 1 / 12, places=6)
+        snapped = align_duration_to_frames(2.87, 12)
+        self.assertAlmostEqual(align_duration_to_frames(snapped, 12), snapped, places=6)
+        with self.assertRaisesRegex(ValueError, "fps"):
+            align_duration_to_frames(2.0, 0)
+
+    def test_rendered_clip_lands_exactly_on_the_frame_grid(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            clip = root / "clip.mp4"
+            render_scene_clip(
+                self._still(root / "still.png"),
+                None,
+                clip,
+                width=self.WIDTH,
+                height=self.HEIGHT,
+                fps=self.FPS,
+                clip_duration=2.87,
+                camera="zoom_in",
+                quality="preview",
+            )
+            stream = next(
+                item
+                for item in probe(clip)["streams"]
+                if item.get("codec_type") == "video"
+            )
+            frames = int(stream["nb_frames"])
+            self.assertEqual(frames, 35)
+            # Container duration matches the frame count, so nothing is lost.
+            self.assertAlmostEqual(duration(clip), frames / self.FPS, places=3)
+
+    def test_frame_rate_tolerance_covers_a_lost_frame(self) -> None:
+        # Real failure: a 5.83 s preview encoded at 12 fps whose average came
+        # out at 414/35 = 11.829 fps, one whole frame short of the timeline.
+        measured = 414 / 35
+        self.assertGreaterEqual(12 - measured, 0.1)
+        self.assertGreaterEqual(frame_rate_tolerance(5.833333, 12), 12 - measured)
+        # Long renders keep the tighter relative allowance ...
+        self.assertEqual(frame_rate_tolerance(20.353, 12), 0.1)
+        self.assertEqual(frame_rate_tolerance(19.395, 30), 0.15)
+        # ... and a genuinely wrong cadence is still rejected.
+        self.assertGreater(abs(24 - 12), frame_rate_tolerance(5.833333, 12))
+        self.assertGreater(abs(30 - 12), frame_rate_tolerance(5.833333, 12))
+
+    def test_short_video_validates_on_the_target_cadence(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            still = self._still(root / "still.png")
+            clips = []
+            for index, clip_duration in enumerate((2.870, 2.917)):
+                clip = root / f"clip_{index}.mp4"
+                render_scene_clip(
+                    still,
+                    None,
+                    clip,
+                    width=self.WIDTH,
+                    height=self.HEIGHT,
+                    fps=self.FPS,
+                    clip_duration=clip_duration,
+                    camera="zoom_in",
+                    quality="preview",
+                )
+                clips.append(clip)
+            rendered_frames = sum(self._frames(clip) for clip in clips)
+            output = root / "joined.mp4"
+            concatenate(clips, output, root / "concat.txt")
+            report = validate_video(output, self.WIDTH, self.HEIGHT, self.FPS, muted=True)
+            joined_frames = self._frames(output)
+            # Force the allowance to an impossible value: the very same file
+            # must then be rejected, proving the gate really consults it.
+            with patch("pipeline.media.frame_rate_tolerance", return_value=-1.0):
+                with self.assertRaisesRegex(RuntimeError, "Unexpected frame rate"):
+                    validate_video(output, self.WIDTH, self.HEIGHT, self.FPS, muted=True)
+        # Nothing is dropped at the scene seam ...
+        self.assertEqual(joined_frames, rendered_frames)
+        # ... and a short two-scene video keeps the requested cadence instead of
+        # drifting a whole frame behind (this pair averaged 11.83 fps before).
+        self.assertLess(abs(report["fps"] - self.FPS), 0.25 / report["duration"])
 
 
 if __name__ == "__main__":

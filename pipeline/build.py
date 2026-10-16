@@ -11,6 +11,7 @@ from typing import Any, Optional
 from . import PIPELINE_VERSION
 from .config import resolve_project
 from .media import (
+    align_duration_to_frames,
     burn_ass_subtitles,
     burn_subtitle_overlays,
     concatenate,
@@ -304,6 +305,9 @@ def build_project(
             fallback_duration,
             audio_duration + float(scene.get("tail_pad", project.get("tail_pad", 0.35))),
         )
+        # Snap to the frame grid before it reaches the cache key, the encoder
+        # and the subtitle clock, so every scene stays on the same timeline.
+        clip_duration = align_duration_to_frames(clip_duration, fps)
 
         if not local_cues:
             caption = str(scene.get("caption", scene.get("narration", ""))).strip()

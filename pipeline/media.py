@@ -271,6 +271,22 @@ def rasterize_svg(
     )
 
 
+def align_duration_to_frames(clip_duration: float, fps: int) -> float:
+    """Snap a clip duration onto the encoder's frame grid.
+
+    A clip can only contain whole frames, so a duration that falls between two
+    frame boundaries makes the encoded video shorter than its container
+    duration. That deficit accumulates across scenes and drags the average
+    frame rate of the concatenated output below the target, which short videos
+    notice most. Rounding up costs less than one frame of silence and never
+    truncates narration.
+    """
+    if fps <= 0:
+        raise ValueError("fps must be positive")
+    frames = max(1, math.ceil(clip_duration * fps - 1e-6))
+    return frames / fps
+
+
 def _video_filter(camera: str, width: int, height: int, fps: int, clip_duration: float) -> str:
     frames = max(1, round(clip_duration * fps))
     fade = (
@@ -321,6 +337,7 @@ def render_scene_clip(
     quality: str,
 ) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
+    clip_duration = align_duration_to_frames(clip_duration, fps)
     video_filter = _video_filter(camera, width, height, fps, clip_duration)
     preset = "veryfast" if quality == "preview" else "medium"
     crf = "27" if quality == "preview" else "18"
@@ -465,6 +482,18 @@ def contact_sheet(video: Path, output: Path, timestamps: Sequence[float]) -> Non
         )
 
 
+def frame_rate_tolerance(output_duration: float, fps: int) -> float:
+    """Allowed deviation between measured and target average frame rate.
+
+    Frame counts are whole numbers while scene durations are not, so a timeline
+    can legitimately sit up to one frame away from the nominal cadence. On a
+    short video that shows up as a large *average* deviation. Scale the
+    allowance with the timeline so a sub-frame rounding artefact is not
+    reported as a broken encode, while a wrong cadence still fails loudly.
+    """
+    return max(0.1, fps * 0.005, 1.0 / max(output_duration, 1e-3))
+
+
 def validate_video(path: Path, width: int, height: int, fps: int, muted: bool) -> dict[str, Any]:
     data = probe(path)
     streams = data.get("streams", [])
@@ -482,9 +511,11 @@ def validate_video(path: Path, width: int, height: int, fps: int, muted: bool) -
     rate = video.get("avg_frame_rate") or video.get("r_frame_rate", "0/1")
     numerator, denominator = (int(item) for item in rate.split("/"))
     actual_fps = numerator / denominator if denominator else 0
+    output_duration = duration(path)
     # AAC/video concat boundaries can shift the average by a fraction of a
     # frame per second even when every source clip is rendered at the target.
-    if abs(actual_fps - fps) > max(0.1, fps * 0.005):
+    tolerance = frame_rate_tolerance(output_duration, fps)
+    if abs(actual_fps - fps) > tolerance:
         raise RuntimeError(f"Unexpected frame rate {actual_fps}; expected {fps}")
     if not audio:
         raise RuntimeError("Output has no audio stream")
@@ -492,7 +523,7 @@ def validate_video(path: Path, width: int, height: int, fps: int, muted: bool) -
     if audio_levels and audio_levels["max_volume"] < -60:
         raise RuntimeError(f"Output audio appears silent: {audio_levels['max_volume']} dB")
     return {
-        "duration": duration(path),
+        "duration": output_duration,
         "width": width,
         "height": height,
         "fps": actual_fps,
