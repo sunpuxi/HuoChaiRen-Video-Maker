@@ -1,0 +1,48 @@
+{
+  "title": "为什么人类发明了钱，却反而越来越缺钱？",
+  "output_name": "money_one_minute_sprite",
+  "resolution": [
+    1280,
+    720
+  ],
+  "fps": 24,
+  "motion_oversample": 4,
+  "preview": {
+    "resolution": [
+      640,
+      360
+    ],
+    "fps": 12
+  },
+  "background": "#FFFDF7",
+  "minimum_scene_duration": 1.2,
+  "tail_pad": 0.35,
+  "voice": {
+    "engine": "minimax",
+    "model": "speech-2.8-hd",
+    "voice_id": "male-qn-qingse",
+    "speed": 1,
+    "language_boost": "Chinese",
+    "format": "mp3",
+    "api_key_env": "MINIMAX_API_KEY",
+    "timeout": 90,
+    "max_retries": 2
+  },
+  "subtitles": {
+    "enabled": true,
+    "font_name": "PingFang SC",
+    "font_size": 42,
+    "color": "#FFFFFF",
+    "background_color": "#171717B8",
+    "outline_color": "#171717",
+    "outline": 2,
+    "shadow": 1,
+    "margin_bottom": 34
+  },
+  "font_files": [],
+  "background_style": {
+    "enabled": true
+  },
+  "art_style": "sprite",
+  "sprites": "sprites"
+}
