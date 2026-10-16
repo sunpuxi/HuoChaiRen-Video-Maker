@@ -1,0 +1,122 @@
+[
+  {
+    "id": "s01_walk",
+    "title": "到处都在打折",
+    "narration": "商场里到处都是打折。你有没有想过，促销为什么总能让你掏钱？",
+    "camera": "pan_right",
+    "characters": [
+      {
+        "x": 640,
+        "y": 285,
+        "scale": 0.66,
+        "pose": "walk",
+        "expression": "neutral"
+      }
+    ]
+  },
+  {
+    "id": "s02_smile",
+    "title": "五折，好划算",
+    "narration": "五折，好便宜，不买就亏了。你心里是这么想的。",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 285,
+        "scale": 0.66,
+        "pose": "stand",
+        "expression": "smile"
+      }
+    ]
+  },
+  {
+    "id": "s03_think",
+    "title": "可你本来没打算买",
+    "narration": "可你本来，根本没打算买这件东西。",
+    "camera": "static",
+    "characters": [
+      {
+        "x": 640,
+        "y": 285,
+        "scale": 0.66,
+        "pose": "think",
+        "expression": "confused"
+      }
+    ]
+  },
+  {
+    "id": "s04_point",
+    "title": "锚定效应",
+    "narration": "这就是锚定效应。原价 999，现价 499。",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 285,
+        "scale": 0.66,
+        "pose": "point",
+        "expression": "neutral"
+      }
+    ]
+  },
+  {
+    "id": "s05_arms",
+    "title": "999 只是参照物",
+    "narration": "那个 999 从来没打算卖出去，它只是用来当参照的。",
+    "camera": "zoom_out",
+    "characters": [
+      {
+        "x": 640,
+        "y": 285,
+        "scale": 0.66,
+        "pose": "arms_up",
+        "expression": "surprised"
+      }
+    ]
+  },
+  {
+    "id": "s06_lookdown",
+    "title": "499 看起来像白捡",
+    "narration": "有了它，499 看起来就像白捡的便宜。",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 285,
+        "scale": 0.66,
+        "pose": "look_down",
+        "expression": "neutral"
+      }
+    ]
+  },
+  {
+    "id": "s07_sad",
+    "title": "其实你花了 499",
+    "narration": "你觉得自己省了 500 块，其实你花掉了 499。",
+    "camera": "static",
+    "characters": [
+      {
+        "x": 640,
+        "y": 285,
+        "scale": 0.66,
+        "pose": "stand",
+        "expression": "sad"
+      }
+    ]
+  },
+  {
+    "id": "s08_close",
+    "title": "错觉比欲望更管用",
+    "narration": "省钱的错觉，比花钱的欲望更能让人打开钱包。",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 285,
+        "scale": 0.66,
+        "pose": "stand",
+        "expression": "smile"
+      }
+    ]
+  }
+]
