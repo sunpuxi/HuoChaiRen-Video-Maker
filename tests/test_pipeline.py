@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import os
 import re
@@ -10,6 +11,7 @@ import wave
 from pathlib import Path
 from unittest.mock import patch
 
+from pipeline.build import art_style_key
 from pipeline.animate import (
     ANIMATION_VERSION,
     animation_signature,
@@ -18,7 +20,14 @@ from pipeline.animate import (
     split_layers,
     strip_background,
 )
-from pipeline.config import load_env_file, resolve_project
+from pipeline import handdraw
+from pipeline.config import (
+    ALLOWED_EXPRESSIONS,
+    ALLOWED_POSES,
+    load_env_file,
+    resolve_project,
+)
+from pipeline.ink import chain, circle_points, ink, ink_loop, wobble
 from pipeline.media import (
     _video_filter,
     align_duration_to_frames,
@@ -32,7 +41,7 @@ from pipeline.media import (
     validate_video,
 )
 from pipeline.subtitles import write_ass, write_srt
-from pipeline.svg import ICONS, PAPER_SHAPES, render_scene_svg
+from pipeline.svg import ICONS, PAPER_SHAPES, PROP_RENDERERS, render_scene_svg
 from pipeline.tts import (
     DEFAULT_MINIMAX_ENDPOINT,
     TTSError,
@@ -1022,3 +1031,263 @@ class AnimationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+
+# --- hand-drawn art style ---------------------------------------------------
+
+class InkEngineTests(unittest.TestCase):
+    """The ink engine must be deterministic — every render cache depends on it."""
+
+    def setUp(self) -> None:
+        self.stroke = chain(((-40, 0), (-10, 30), (20, 40), (60, 10)))
+
+    def test_ink_is_deterministic(self) -> None:
+        self.assertEqual(ink(self.stroke, 12, "probe"), ink(self.stroke, 12, "probe"))
+
+    def test_ink_varies_with_the_seed_name(self) -> None:
+        self.assertNotEqual(ink(self.stroke, 12, "probe-a"), ink(self.stroke, 12, "probe-b"))
+
+    def test_ink_never_emits_a_constant_stroke_width(self) -> None:
+        # A single uniform width is exactly what makes vector art look machine-made.
+        self.assertNotIn('stroke-width="12"', ink(self.stroke, 12, "probe"))
+
+    def test_ink_loop_stays_hollow(self) -> None:
+        contour = wobble(circle_points(0, 0, 50, 24), "ring", 1.0, closed=True)
+        path = ink_loop(contour, 10, "ring")
+        # Two offset rings under even-odd: one subpath each, interior unfilled.
+        self.assertIn('fill-rule="evenodd"', path)
+        self.assertEqual(path.count("M"), 2)
+
+    def test_wobble_stays_within_the_requested_amplitude(self) -> None:
+        moved = wobble(self.stroke, "amp", amp=2.0)
+        self.assertEqual(len(moved), len(self.stroke))
+        for (x0, y0), (x1, y1) in zip(self.stroke, moved):
+            self.assertLessEqual(((x1 - x0) ** 2 + (y1 - y0) ** 2) ** 0.5, 2.05)
+
+
+class ArtStyleTests(unittest.TestCase):
+    """The default style must stay byte-identical; the new one is opt-in."""
+
+    SCENE = {
+        "id": "t",
+        "narration": "x",
+        "title": "标题",
+        "camera": "zoom_in",
+        "characters": [
+            {"x": 400, "y": 220, "scale": 0.7, "pose": "point", "expression": "smile"},
+            {"x": 880, "y": 240, "scale": 0.6, "pose": "think", "expression": "confused"},
+        ],
+        "props": [{"type": "icon", "name": "sheep", "x": 640, "y": 380}],
+    }
+    PROJECT = {"background": "#FFFDF7", "background_style": {"enabled": True}}
+
+    def test_line_style_output_is_frozen(self) -> None:
+        # A golden hash: an accidental change on the default drawing path would
+        # silently invalidate every cached image and clip in existing projects.
+        svg = render_scene_svg(self.SCENE, self.PROJECT, index=1)
+        self.assertEqual(
+            hashlib.sha256(svg.encode()).hexdigest(),
+            "ced0f51fce9fe2678deb0e9c725b58a0922554870d9fd8c48126a9051051c4e2",
+        )
+
+    def test_style_resolution_order(self) -> None:
+        self.assertEqual(handdraw.art_style_for({}, None), "line")
+        self.assertEqual(handdraw.art_style_for({}, {"art_style": "hand"}), "hand")
+        self.assertEqual(handdraw.art_style_for({"style": "line"}, {"art_style": "hand"}), "line")
+        # an unknown style falls back rather than taking the render down
+        self.assertEqual(handdraw.art_style_for({"style": "bogus"}, None),
+                         handdraw.DEFAULT_STYLE)
+
+    def test_hand_style_changes_the_scene(self) -> None:
+        hand = dict(self.PROJECT, art_style="hand")
+        self.assertNotEqual(render_scene_svg(self.SCENE, self.PROJECT, index=1),
+                            render_scene_svg(self.SCENE, hand, index=1))
+
+    def test_hand_style_draws_an_inked_figure(self) -> None:
+        svg = render_scene_svg(self.SCENE, dict(self.PROJECT, art_style="hand"), index=1)
+        self.assertIn('fill-rule="evenodd"', svg)
+        self.assertGreater(len(svg), 20000)
+
+    def test_clip_cache_records_non_default_styles(self) -> None:
+        # Animated clips composite from a character-free base image, so without
+        # this the clip cache serves a hand-drawn clip to a line-style project.
+        scene = {"id": "a", "characters": [{"x": 1, "y": 1}]}
+        self.assertIsNone(art_style_key(scene, {}))
+        self.assertIsNone(art_style_key(scene, {"art_style": "line"}))
+        self.assertEqual(art_style_key(scene, {"art_style": "hand"}), ["hand"])
+        # per-character override still registers
+        mixed = {"id": "a", "characters": [{"x": 1, "y": 1}, {"x": 2, "y": 2, "style": "hand"}]}
+        self.assertEqual(art_style_key(mixed, {}), ["line", "hand"])
+
+    def test_ground_line_follows_the_style_metrics(self) -> None:
+        hand = render_scene_svg(self.SCENE, dict(self.PROJECT, art_style="hand"), index=1)
+        line = handdraw.metrics_for("line")
+        inked = handdraw.metrics_for("hand")
+        self.assertNotEqual(line["foot"], inked["foot"])
+        self.assertIn(f'cy="{220 + 0.7 * line["foot"]:g}"',
+                      render_scene_svg(self.SCENE, self.PROJECT, index=1))
+        self.assertIn(f'cy="{220 + 0.7 * inked["foot"]:g}"', hand)
+
+
+class HandDrawnCharacterTests(unittest.TestCase):
+
+    def test_every_pose_and_expression_renders(self) -> None:
+        for pose in ALLOWED_POSES:
+            for expression in ALLOWED_EXPRESSIONS:
+                svg = handdraw.figure({"pose": pose, "expression": expression})
+                self.assertTrue(svg.startswith("<"))
+                self.assertGreater(len(svg), 4000)
+
+    def test_every_style_variant_renders(self) -> None:
+        for key, values in (("hair", handdraw.HAIR_STYLES),
+                            ("brow", handdraw.BROW_STYLES),
+                            ("nose", handdraw.NOSE_STYLES),
+                            ("mouth", handdraw.MOUTH_STYLES),
+                            ("outfit", handdraw.OUTFITS),
+                            ("ears", handdraw.EARS)):
+            for value in values:
+                self.assertGreater(len(handdraw.figure({key: value})), 3000,
+                                   f"{key}={value} produced a suspiciously small figure")
+
+    def test_expression_drives_brow_and_mouth(self) -> None:
+        self.assertEqual(handdraw.spec_of({"expression": "angry"})["brow"], "angry")
+        self.assertEqual(handdraw.spec_of({"expression": "surprised"})["mouth"], "open")
+        # an explicit field wins over the expression it would otherwise imply
+        spec = handdraw.spec_of({"expression": "angry", "mouth": "grin"})
+        self.assertEqual(spec["mouth"], "grin")
+        self.assertEqual(spec["brow"], "angry")
+
+    def test_unknown_values_fall_back_instead_of_raising(self) -> None:
+        spec = handdraw.spec_of({"hair": "mohawk", "nose": "beak", "ears": "wings"})
+        self.assertIn(spec["hair"], handdraw.HAIR_STYLES)
+        self.assertIn(spec["nose"], handdraw.NOSE_STYLES)
+        self.assertIn(spec["ears"], handdraw.EARS)
+
+    def test_blink_closes_the_eye(self) -> None:
+        opened = handdraw.head_parts(handdraw.spec_of({}), "b", 0.0)
+        shut = handdraw.head_parts(handdraw.spec_of({}), "b", 1.0)
+        self.assertNotEqual(opened, shut)
+        self.assertIn('r="3.6"', opened)      # highlight only exists when open
+        self.assertNotIn('r="3.6"', shut)
+
+    def test_walk_cycle_moves_the_limbs(self) -> None:
+        upright = handdraw.figure({}, pose="stand")
+        mid_stride = handdraw.figure({}, pose="walk", walk_phase=1.2)
+        self.assertNotEqual(upright, mid_stride)
+        self.assertNotEqual(handdraw.walk_legs(1.2), handdraw.walk_legs(3.9))
+
+
+class ArtStyleValidationTests(unittest.TestCase):
+
+    def _resolve(self, project: dict, character: dict) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "project.json").write_text(json.dumps({
+                "resolution": [1280, 720],
+                "fps": 30,
+                "preview": {"resolution": [640, 360], "fps": 12},
+                "voice": {"engine": "macos"},
+                **project,
+            }), encoding="utf-8")
+            (root / "storyboard.json").write_text(json.dumps(
+                [{"id": "s1", "narration": "测试。", "duration": 2, "characters": [character]}]
+            ), encoding="utf-8")
+            resolve_project(root)
+
+    def test_rejects_unknown_project_art_style(self) -> None:
+        with self.assertRaisesRegex(ValueError, "project.art_style"):
+            self._resolve({"art_style": "painterly"}, {})
+
+    def test_rejects_unknown_character_style_fields(self) -> None:
+        with self.assertRaisesRegex(ValueError, "hair is not supported"):
+            self._resolve({"art_style": "hand"}, {"hair": "mohawk"})
+        with self.assertRaisesRegex(ValueError, "style is not supported"):
+            self._resolve({"art_style": "hand"}, {"style": "sketch"})
+
+    def test_accepts_a_hand_drawn_character(self) -> None:
+        self._resolve({"art_style": "hand"}, {
+            "hair": "afro", "nose": "potato", "outfit": "robe", "brow": "unibrow",
+            "mouth": "grin", "ears": "big", "hair_colour": "#222222", "accent": "#E8623C",
+        })
+
+
+class HandDrawnPropTests(unittest.TestCase):
+    """Props share the character's pen, so a scene never mixes two line styles."""
+
+    def _prop(self, kind, **extra):
+        return {"type": kind, "x": 300, "y": 200, "x1": 100, "y1": 100,
+                "x2": 500, "y2": 220, **extra}
+
+    def test_every_prop_type_renders(self) -> None:
+        from pipeline import handprops
+        self.assertEqual(set(handprops.PROP_RENDERERS), set(PROP_RENDERERS))
+        for kind, renderer in handprops.PROP_RENDERERS.items():
+            svg = renderer(self._prop(kind, name="sheep", text="你好"))
+            self.assertTrue(svg.strip(), f"{kind} rendered nothing")
+
+    def test_every_icon_renders(self) -> None:
+        from pipeline import handprops
+        self.assertEqual(set(handprops.ICON_RENDERERS), set(ICONS))
+        for name in handprops.ICON_RENDERERS:
+            self.assertGreater(len(handprops.icon(self._prop("icon", name=name))), 500)
+
+    def test_props_use_the_requested_colour(self) -> None:
+        # The arrow shaft silently kept the default ink colour while its head
+        # was green, which reads as a black blob with a green tip.
+        from pipeline import handprops
+        for kind in ("arrow", "cross", "arc", "exchange", "star"):
+            svg = handprops.PROP_RENDERERS[kind](
+                self._prop(kind, width=15, _grow=1.0, color="#45A95A"))
+            self.assertIn("#45A95A", svg, f"{kind} ignored its colour")
+            self.assertNotIn("#141414", svg, f"{kind} fell back to the ink colour")
+
+    def test_arrowheads_are_polygons_not_curves(self) -> None:
+        # chain() bows a 3-point tuple into a quadratic, which silently turns
+        # every arrowhead into a lens. Heads must be straight-edged.
+        from pipeline import handprops
+        for kind in ("arrow", "exchange"):
+            svg = handprops.PROP_RENDERERS[kind](self._prop(kind, width=15, _grow=1.0))
+            heads = [seg for seg in svg.split("<path") if 'fill="#45A95A"' in seg]
+            self.assertTrue(heads, f"{kind} drew no filled head")
+            for head in heads:
+                body = head.split('d="', 1)[1].split('"', 1)[0]
+                self.assertIn("L", body)
+                self.assertNotIn("Q", body)
+
+    def test_icons_keep_a_constant_on_screen_pen(self) -> None:
+        # A large icon must not look bolder than a small one: the local width
+        # is divided by the scale so the on-screen result is constant.
+        from pipeline import handprops
+        small_w, _ = handprops._icon_pen({"size": 100})
+        large_w, _ = handprops._icon_pen({"size": 400})
+        self.assertAlmostEqual(small_w * 1.0, large_w * 4.0, places=6)
+
+    def test_hand_style_swaps_props_in_a_scene(self) -> None:
+        scene = {"id": "s", "narration": "x", "camera": "static",
+                 "characters": [{"x": 640, "y": 300}],
+                 "props": [{"type": "icon", "name": "sheep", "x": 500, "y": 400},
+                           {"type": "cross", "x": 800, "y": 400}]}
+        base = {"background_style": {"enabled": False}}
+        line = render_scene_svg(scene, base, index=0)
+        hand = render_scene_svg(scene, dict(base, art_style="hand"), index=0)
+        self.assertIn('Q', line)               # the line arrow uses markers/curves
+        self.assertIn('fill-rule="evenodd"', hand)
+        self.assertGreater(len(hand), len(line) * 3)
+
+    def test_bubble_and_node_keep_their_text(self) -> None:
+        from pipeline import handprops
+        self.assertIn(">你好<", handprops.bubble(self._prop("bubble", text="你好")))
+        self.assertIn(">身份<", handprops.node(self._prop("node")))
+
+
+class InkChainTests(unittest.TestCase):
+
+    def test_chain_accepts_lines_quads_and_cubics(self) -> None:
+        self.assertEqual(len(chain(((0, 0), (10, 0)))), 2)
+        self.assertGreater(len(chain(((0, 0), (5, -5), (10, 0)))), 2)
+        self.assertGreater(len(chain(((0, 0), (3, -5), (7, -5), (10, 0)))), 2)
+
+    def test_chain_rejects_a_polyline_of_the_wrong_length(self) -> None:
+        with self.assertRaisesRegex(ValueError, "segments of 2, 3 or 4 points"):
+            chain(((0, 0), (1, 1), (2, 2), (3, 3), (4, 4)))
