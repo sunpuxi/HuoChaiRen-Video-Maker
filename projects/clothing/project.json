@@ -1,0 +1,31 @@
+{
+  "title": "人类为什么穿衣服",
+  "output_name": "clothing_explainer",
+  "resolution": [1920, 1080],
+  "fps": 30,
+  "motion_oversample": 4,
+  "preview": {
+    "resolution": [640, 360],
+    "fps": 12
+  },
+  "background": "#FFFDF7",
+  "minimum_scene_duration": 2.6,
+  "tail_pad": 0.35,
+  "voice": {
+    "engine": "macos",
+    "name": "Tingting",
+    "rate": 215
+  },
+  "subtitles": {
+    "enabled": true,
+    "font_name": "PingFang SC",
+    "font_size": 42,
+    "color": "#FFFFFF",
+    "background_color": "#171717B8",
+    "outline_color": "#171717",
+    "outline": 2,
+    "shadow": 1,
+    "margin_bottom": 34
+  },
+  "font_files": []
+}

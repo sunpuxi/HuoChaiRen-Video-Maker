@@ -1,0 +1,169 @@
+[
+  {
+    "id": "scene_01_hook",
+    "title": "你今天穿了什么？",
+    "narration": "你今天穿了什么？我们每天都会穿衣服，却很少认真想过原因。",
+    "narration_segments": [
+      { "text": "你今天穿了什么？", "pause_after": 0.18 },
+      { "text": "我们每天都会穿衣服，", "pause_after": 0.08 },
+      { "text": "却很少认真想过原因。", "pause_after": 0.2 }
+    ],
+    "background": "#FFFDF7",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 610,
+        "y": 225,
+        "scale": 0.72,
+        "rotation": 5,
+        "pose": "look_down",
+        "expression": "confused",
+        "shirt": "#6599D1"
+      }
+    ],
+    "props": [
+      { "type": "arc", "x": 155, "y": 128, "width": 180 },
+      {
+        "type": "arrow",
+        "x1": 905,
+        "y1": 236,
+        "x2": 1080,
+        "y2": 236,
+        "color": "#171717",
+        "width": 10
+      }
+    ]
+  },
+  {
+    "id": "scene_02_twist",
+    "title": "只是为了保暖？",
+    "narration": "也许，衣服从一开始，就不只是为了保暖。",
+    "narration_segments": [
+      { "text": "也许，衣服从一开始，", "pause_after": 0.1 },
+      { "text": "就不只是为了保暖。", "pause_after": 0.2 }
+    ],
+    "background": "#F6B95C",
+    "camera": "pan_left",
+    "characters": [
+      {
+        "x": 390,
+        "y": 245,
+        "scale": 0.63,
+        "pose": "arms_up",
+        "expression": "surprised",
+        "shirt": "#78AEDA"
+      }
+    ],
+    "props": [
+      { "type": "cross", "x": 875, "y": 315, "size": 210 },
+      { "type": "star", "x": 170, "y": 188, "scale": 0.8 },
+      { "type": "star", "x": 1130, "y": 175, "scale": 0.65 }
+    ]
+  },
+  {
+    "id": "scene_03_language",
+    "title": "衣服也是一种语言",
+    "narration": "它还是一种语言。在你开口之前，衣服已经替你表达。",
+    "narration_segments": [
+      { "text": "它还是一种语言。", "pause_after": 0.15 },
+      { "text": "在你开口之前，衣服已经替你表达。", "pause_after": 0.2 }
+    ],
+    "background": "#FFFDF7",
+    "camera": "zoom_out",
+    "characters": [
+      {
+        "x": 280,
+        "y": 270,
+        "scale": 0.57,
+        "pose": "stand",
+        "expression": "smile",
+        "shirt": "#B77B4C",
+        "clothing": "hide"
+      },
+      {
+        "x": 1000,
+        "y": 270,
+        "scale": 0.57,
+        "pose": "stand",
+        "expression": "smile",
+        "shirt": "#7D9FC6"
+      }
+    ],
+    "props": [
+      {
+        "type": "bubble",
+        "x": 640,
+        "y": 295,
+        "width": 250,
+        "height": 125,
+        "text": "•••"
+      },
+      {
+        "type": "arrow",
+        "x1": 420,
+        "y1": 420,
+        "x2": 830,
+        "y2": 420,
+        "color": "#45A95A"
+      }
+    ]
+  },
+  {
+    "id": "scene_04_identity",
+    "title": "它告诉别人：你是谁",
+    "narration": "颜色、款式和细节，已经告诉别人你的身份、群体、态度和角色。",
+    "narration_segments": [
+      { "text": "颜色、款式和细节，", "pause_after": 0.1 },
+      { "text": "已经告诉别人你的身份、群体、态度和角色。", "pause_after": 0.2 }
+    ],
+    "background": "#CFEBC3",
+    "camera": "pan_right",
+    "characters": [
+      {
+        "x": 640,
+        "y": 255,
+        "scale": 0.61,
+        "pose": "stand",
+        "expression": "smile",
+        "shirt": "#F0A454"
+      }
+    ],
+    "connections": [
+      { "x1": 350, "y1": 250, "x2": 510, "y2": 320, "width": 13 },
+      { "x1": 930, "y1": 250, "x2": 770, "y2": 320, "width": 13 },
+      { "x1": 350, "y1": 485, "x2": 510, "y2": 410, "width": 13 },
+      { "x1": 930, "y1": 485, "x2": 770, "y2": 410, "width": 13 }
+    ],
+    "props": [
+      { "type": "node", "x": 240, "y": 235, "text": "身份" },
+      { "type": "node", "x": 1040, "y": 235, "text": "群体" },
+      { "type": "node", "x": 240, "y": 495, "text": "态度" },
+      { "type": "node", "x": 1040, "y": 495, "text": "角色" }
+    ]
+  },
+  {
+    "id": "scene_05_close",
+    "title": "你选择的，不只是衣服",
+    "narration": "所以你选择的，不只是衣服，而是你想如何被世界看见。",
+    "narration_segments": [
+      { "text": "所以你选择的，不只是衣服，", "pause_after": 0.1 },
+      { "text": "而是你想如何被世界看见。", "pause_after": 0.2 }
+    ],
+    "background": "#FFFDF7",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 360,
+        "y": 265,
+        "scale": 0.58,
+        "pose": "point",
+        "expression": "confused",
+        "shirt": "#6599D1"
+      }
+    ],
+    "props": [
+      { "type": "mirror", "x": 895, "y": 350, "width": 255, "height": 370 },
+      { "type": "arc", "x": 640, "y": 185, "width": 170 }
+    ]
+  }
+]

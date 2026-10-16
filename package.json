@@ -1,0 +1,17 @@
+{
+  "name": "huochairen-video-maker",
+  "private": true,
+  "version": "0.3.0",
+  "description": "A JSON-driven stickman explainer video rendering pipeline",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sunpuxi/HuoChaiRen-Video-Maker.git"
+  },
+  "scripts": {
+    "rasterize": "node scripts/render_svg.cjs"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "2.6.2"
+  }
+}
