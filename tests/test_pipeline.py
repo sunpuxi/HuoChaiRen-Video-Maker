@@ -28,6 +28,7 @@ from pipeline.config import (
     resolve_project,
 )
 from pipeline.ink import chain, circle_points, ink, ink_loop, wobble
+from pipeline.sprite import find_sprite
 from pipeline.media import (
     _video_filter,
     align_duration_to_frames,
@@ -1291,3 +1292,104 @@ class InkChainTests(unittest.TestCase):
     def test_chain_rejects_a_polyline_of_the_wrong_length(self) -> None:
         with self.assertRaisesRegex(ValueError, "segments of 2, 3 or 4 points"):
             chain(((0, 0), (1, 1), (2, 2), (3, 3), (4, 4)))
+
+
+class SpriteStyleTests(unittest.TestCase):
+    """Sprites are raster art placed by the same anchors as the vector figures."""
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.dir = Path(self.tmp.name)
+        (self.dir / "sprites").mkdir()
+        self.project = {"_dir": str(self.dir), "sprites": "sprites", "art_style": "sprite"}
+
+    def tearDown(self) -> None:
+        self.tmp.cleanup()
+
+    def _sprite(self, name: str, w: int = 40, h: int = 80) -> Path:
+        import zlib
+        raw = b"".join(b"\x00" + bytes([200, 30, 30, 255]) * w for _ in range(h))
+        import struct
+
+        def chunk(kind, data):
+            return (struct.pack(">I", len(data)) + kind + data
+                    + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF))
+
+        path = self.dir / "sprites" / f"{name}.png"
+        path.write_bytes(b"\x89PNG\r\n\x1a\n"
+                         + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 6, 0, 0, 0))
+                         + chunk(b"IDAT", zlib.compress(raw, 6)) + chunk(b"IEND", b""))
+        return path
+
+    def test_png_size_is_read_without_an_image_library(self) -> None:
+        from pipeline.sprite import _png_size
+        self.assertEqual(_png_size(self._sprite("probe", 37, 91).read_bytes()), (37, 91))
+
+    def test_fallback_chain(self) -> None:
+        # pose_expression -> pose -> expression -> neutral -> default
+        self._sprite("stand")
+        found = find_sprite = None
+        from pipeline.sprite import find_sprite
+        self.assertEqual(find_sprite(self.project, {"pose": "stand", "expression": "smile"}).name,
+                         "stand.png")
+        self._sprite("neutral")
+        self.assertEqual(find_sprite(self.project, {"pose": "walk", "expression": "smile"}).name,
+                         "neutral.png")
+        self._sprite("walk_smile")
+        self.assertEqual(find_sprite(self.project, {"pose": "walk", "expression": "smile"}).name,
+                         "walk_smile.png")
+
+    def test_missing_sprite_is_reported_not_crashed(self) -> None:
+        from pipeline.sprite import character_svg, missing_sprite_names
+        char = {"x": 640, "y": 220, "pose": "walk", "expression": "smile"}
+        self.assertEqual(character_svg(char, project=self.project), "")
+        self.assertEqual(missing_sprite_names(self.project, [char]), ["walk/smile"])
+
+    def test_sprite_lands_on_the_vector_footing(self) -> None:
+        # feet must land where the line figure's do, or the ground line drifts
+        from pipeline.sprite import (SPRITE_FIGURE_HEIGHT, SPRITE_FOOT_OFFSET,
+                                     character_svg)
+        self._sprite("stand", 50, 100)
+        svg = character_svg({"x": 640, "y": 220, "scale": 0.7, "pose": "stand"},
+                            project=self.project)
+        # the anchor is the line figure's head centre: the sprite starts a head
+        # above it and its feet land on the same line
+        top = 220 + 0.7 * (SPRITE_FOOT_OFFSET - SPRITE_FIGURE_HEIGHT)
+        self.assertIn(f'y="{top:g}"', svg)
+        self.assertIn(f'height="{0.7 * SPRITE_FIGURE_HEIGHT:g}"', svg)
+        self.assertAlmostEqual(220 + 0.7 * SPRITE_FOOT_OFFSET,
+                               220 + 0.7 * 438.0, places=6)
+        self.assertEqual(handdraw.metrics_for("sprite")["foot"],
+                         handdraw.metrics_for("line")["foot"])
+
+    def test_sprite_is_embedded_as_a_data_uri(self) -> None:
+        from pipeline.sprite import character_svg
+        self._sprite("stand")
+        svg = character_svg({"x": 640, "y": 220, "pose": "stand"}, project=self.project)
+        self.assertIn('href="data:image/png;base64,', svg)
+
+    def test_scene_renders_with_a_sprite_character(self) -> None:
+        self._sprite("stand")
+        scene = {"id": "s", "narration": "x", "camera": "static",
+                 "characters": [{"x": 640, "y": 300, "scale": 0.7, "pose": "stand",
+                                 "expression": "smile"}]}
+        project = dict(self.project, background_style={"enabled": True})
+        svg = render_scene_svg(scene, project, index=0)
+        self.assertIn("data:image/png;base64,", svg)
+        self.assertIn("Q640", svg)   # the ground line is still drawn
+
+    def test_style_accepts_sprite_and_rejects_unknown(self) -> None:
+        self.assertEqual(handdraw.art_style_for({}, {"art_style": "sprite"}), "sprite")
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "project.json").write_text(json.dumps({
+                "resolution": [1280, 720], "fps": 30,
+                "preview": {"resolution": [640, 360], "fps": 12},
+                "voice": {"engine": "macos"}, "art_style": "sprite",
+            }), encoding="utf-8")
+            (root / "storyboard.json").write_text(
+                json.dumps([{"id": "s1", "narration": "测试。", "duration": 2}]),
+                encoding="utf-8")
+            _, project, _ = resolve_project(root)
+            self.assertEqual(project["art_style"], "sprite")
+            self.assertEqual(project["_dir"], str(root.resolve()))
