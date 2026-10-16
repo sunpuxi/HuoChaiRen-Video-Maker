@@ -1,0 +1,176 @@
+[
+  {
+    "id": "s01_hook",
+    "title": "你有没有想过？",
+    "narration": "你有没有想过一件很怪的事？",
+    "duration": 3.0,
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 280,
+        "scale": 0.64,
+        "pose": "think",
+        "expression": "confused",
+        "hair": "spikes",
+        "nose": "hook",
+        "outfit": "tie",
+        "shirt": "#FFFFFF"
+      }
+    ]
+  },
+  {
+    "id": "s02_barter",
+    "title": "拿羊换米",
+    "narration": "古人拿羊换米。",
+    "duration": 3.0,
+    "camera": "pan_right",
+    "characters": [
+      {
+        "x": 230,
+        "y": 280,
+        "scale": 0.64,
+        "pose": "point",
+        "expression": "smile",
+        "hair": "spikes",
+        "nose": "hook",
+        "outfit": "fur",
+        "shirt": "#C79A5C"
+      },
+      {
+        "x": 1050,
+        "y": 280,
+        "scale": 0.64,
+        "pose": "stand",
+        "expression": "neutral",
+        "hair": "ring",
+        "nose": "potato",
+        "outfit": "robe",
+        "shirt": "#B9C7D6",
+        "ears": "big"
+      }
+    ],
+    "props": [
+      {
+        "type": "icon",
+        "name": "sheep",
+        "x": 450,
+        "y": 460,
+        "size": 140
+      },
+      {
+        "type": "exchange",
+        "x1": 540,
+        "y1": 500,
+        "x2": 750,
+        "y2": 500,
+        "width": 15
+      },
+      {
+        "type": "icon",
+        "name": "rice",
+        "x": 840,
+        "y": 460,
+        "size": 140
+      }
+    ]
+  },
+  {
+    "id": "s03_stuck",
+    "title": "交易卡住了",
+    "narration": "可是交易卡住了。",
+    "duration": 3.0,
+    "camera": "zoom_out",
+    "characters": [
+      {
+        "x": 260,
+        "y": 280,
+        "scale": 0.64,
+        "pose": "arms_up",
+        "expression": "angry",
+        "hair": "afro",
+        "nose": "hook",
+        "outfit": "overalls",
+        "shirt": "#C9D6C0"
+      },
+      {
+        "x": 1020,
+        "y": 280,
+        "scale": 0.64,
+        "pose": "look_down",
+        "expression": "sad",
+        "hair": "combover",
+        "nose": "pointy",
+        "outfit": "shirt",
+        "shirt": "#EFE8DA",
+        "ears": "big"
+      }
+    ],
+    "props": [
+      {
+        "type": "icon",
+        "name": "fish",
+        "x": 480,
+        "y": 460,
+        "size": 130
+      },
+      {
+        "type": "cross",
+        "x": 640,
+        "y": 470,
+        "size": 120,
+        "width": 28
+      },
+      {
+        "type": "icon",
+        "name": "shoes",
+        "x": 800,
+        "y": 460,
+        "size": 130
+      }
+    ]
+  },
+  {
+    "id": "s04_solved",
+    "title": "钱出现了",
+    "narration": "于是，钱出现了。",
+    "duration": 3.0,
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 300,
+        "scale": 0.62,
+        "pose": "arms_up",
+        "expression": "smile",
+        "hair": "spikes",
+        "nose": "hook",
+        "outfit": "shirt",
+        "shirt": "#8FC7D6"
+      }
+    ],
+    "props": [
+      {
+        "type": "node",
+        "x": 250,
+        "y": 400,
+        "radius": 84,
+        "text": "贝壳"
+      },
+      {
+        "type": "node",
+        "x": 1030,
+        "y": 400,
+        "radius": 84,
+        "text": "金属"
+      },
+      {
+        "type": "star",
+        "x": 640,
+        "y": 150,
+        "scale": 1.1,
+        "color": "#F6D06B"
+      }
+    ]
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "title": "手绘风格演示",
+  "output_name": "hand_demo",
+  "art_style": "hand",
+  "resolution": [1280, 720],
+  "fps": 30,
+  "motion_oversample": 2,
+  "preview": { "resolution": [640, 360], "fps": 12 },
+  "background": "#FFFDF7",
+  "minimum_scene_duration": 2.5,
+  "tail_pad": 0.35,
+  "voice": { "engine": "macos", "name": "Tingting", "rate": 185 },
+  "subtitles": { "enabled": true, "burn": false },
+  "background_style": { "enabled": true, "ground": true, "title_stroke": true, "character_shadows": true }
+}

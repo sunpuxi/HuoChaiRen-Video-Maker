@@ -1,0 +1,604 @@
+[
+  {
+    "id": "s01_weird",
+    "title": "你有没有想过一件很怪的事？",
+    "narration": "你有没有想过，人类发明了钱，为什么我们却总觉得缺钱？",
+    "narration_segments": [
+      {
+        "text": "你有没有想过，人类发明了钱，为什么我们却总觉得缺钱？",
+        "pause_after": 0.15
+      }
+    ],
+    "background": "#FFFDF7",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 255,
+        "scale": 0.7,
+        "pose": "think",
+        "expression": "confused",
+        "shirt": "#6599D1"
+      }
+    ],
+    "props": [
+      {
+        "type": "bubble",
+        "x": 1010,
+        "y": 240,
+        "width": 250,
+        "height": 125,
+        "text": "？"
+      },
+      {
+        "type": "star",
+        "x": 225,
+        "y": 205,
+        "scale": 0.8,
+        "color": "#F5B632"
+      }
+    ],
+    "tail_pad": 0.15
+  },
+  {
+    "id": "s02_convenient",
+    "title": "钱本来是为了方便",
+    "narration": "钱，本来是为了让交换更方便。",
+    "narration_segments": [
+      {
+        "text": "钱，本来是为了让交换更方便。",
+        "pause_after": 0.15
+      }
+    ],
+    "background": "#EAF6FF",
+    "camera": "pan_right",
+    "characters": [
+      {
+        "x": 360,
+        "y": 265,
+        "scale": 0.6,
+        "pose": "stand",
+        "expression": "smile",
+        "shirt": "#78AEDA"
+      },
+      {
+        "x": 920,
+        "y": 265,
+        "scale": 0.6,
+        "pose": "stand",
+        "expression": "smile",
+        "shirt": "#F0A454"
+      }
+    ],
+    "props": [
+      {
+        "type": "arrow",
+        "x1": 560,
+        "y1": 300,
+        "x2": 720,
+        "y2": 300,
+        "color": "#45A95A"
+      }
+    ],
+    "tail_pad": 0.15
+  },
+  {
+    "id": "s03_why_poor",
+    "title": "为什么还是缺钱？",
+    "narration": "可今天，我们明明比古人富得多，却还是不安心。",
+    "narration_segments": [
+      {
+        "text": "可今天，我们明明比古人富得多，却还是不安心。",
+        "pause_after": 0.15
+      }
+    ],
+    "background": "#F6EFE2",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 250,
+        "scale": 0.66,
+        "pose": "arms_up",
+        "expression": "surprised",
+        "shirt": "#6599D1"
+      }
+    ],
+    "props": [
+      {
+        "type": "node",
+        "x": 210,
+        "y": 250,
+        "radius": 78,
+        "text": "更富"
+      },
+      {
+        "type": "node",
+        "x": 1070,
+        "y": 250,
+        "radius": 78,
+        "text": "缺钱"
+      }
+    ],
+    "tail_pad": 0.15
+  },
+  {
+    "id": "s04_balance",
+    "title": "我早上睁眼，先看余额",
+    "narration": "我早上睁眼，先看余额。",
+    "narration_segments": [
+      {
+        "text": "我早上睁眼，先看余额。",
+        "pause_after": 0.15
+      }
+    ],
+    "background": "#FFFDF7",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 255,
+        "scale": 0.66,
+        "pose": "look_down",
+        "expression": "neutral",
+        "shirt": "#7D9FC6",
+        "animation": {
+          "preset": "slide_in",
+          "from_x": -240,
+          "start": 0,
+          "duration": 0.8
+        }
+      }
+    ],
+    "props": [
+      {
+        "type": "bubble",
+        "x": 1015,
+        "y": 245,
+        "width": 240,
+        "height": 122,
+        "text": "余额"
+      },
+      {
+        "type": "star",
+        "x": 230,
+        "y": 212,
+        "scale": 0.7
+      }
+    ],
+    "animation": {
+      "enabled": true,
+      "blink": true,
+      "oversample": 2
+    },
+    "tail_pad": 0.15
+  },
+  {
+    "id": "s05_coffee",
+    "title": "买杯咖啡，我会想值不值",
+    "narration": "买杯咖啡，也要想想值不值。",
+    "narration_segments": [
+      {
+        "text": "买杯咖啡，也要想想值不值。",
+        "pause_after": 0.15
+      }
+    ],
+    "background": "#E9F4DD",
+    "camera": "zoom_out",
+    "characters": [
+      {
+        "x": 600,
+        "y": 255,
+        "scale": 0.66,
+        "pose": "think",
+        "expression": "confused",
+        "shirt": "#F0A454"
+      }
+    ],
+    "props": [
+      {
+        "type": "bubble",
+        "x": 1010,
+        "y": 250,
+        "width": 260,
+        "height": 130,
+        "text": "值不值"
+      }
+    ],
+    "tail_pad": 0.15
+  },
+  {
+    "id": "s06_queue",
+    "title": "房租、账单，已经排好队了",
+    "narration": "收到工资，开心不到两天，房租、账单，就已经排好队了。",
+    "narration_segments": [
+      {
+        "text": "收到工资，开心不到两天，房租、账单，就已经排好队了。",
+        "pause_after": 0.15
+      }
+    ],
+    "background": "#FFFDF7",
+    "camera": "pan_left",
+    "characters": [
+      {
+        "x": 275,
+        "y": 265,
+        "scale": 0.58,
+        "pose": "stand",
+        "expression": "sad",
+        "shirt": "#6599D1"
+      }
+    ],
+    "props": [
+      {
+        "type": "node",
+        "x": 655,
+        "y": 265,
+        "radius": 74,
+        "text": "房租"
+      },
+      {
+        "type": "node",
+        "x": 880,
+        "y": 265,
+        "radius": 74,
+        "text": "账单"
+      },
+      {
+        "type": "node",
+        "x": 1105,
+        "y": 265,
+        "radius": 74,
+        "text": "下月"
+      }
+    ],
+    "tail_pad": 0.15
+  },
+  {
+    "id": "s07_vanish",
+    "title": "假如钱突然消失",
+    "narration": "假如明天，钱突然消失，我们是不是就自由了？",
+    "narration_segments": [
+      {
+        "text": "假如明天，钱突然消失，我们是不是就自由了？",
+        "pause_after": 0.15
+      }
+    ],
+    "background": "#EAF6FF",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 255,
+        "scale": 0.68,
+        "pose": "arms_up",
+        "expression": "surprised",
+        "shirt": "#78AEDA"
+      }
+    ],
+    "props": [
+      {
+        "type": "star",
+        "x": 230,
+        "y": 195,
+        "scale": 0.9,
+        "color": "#F5B632"
+      },
+      {
+        "type": "star",
+        "x": 1055,
+        "y": 205,
+        "scale": 0.7
+      }
+    ],
+    "tail_pad": 0.15
+  },
+  {
+    "id": "s08_dont_answer",
+    "title": "先别急着回答",
+    "narration": "先别急着回答。想想那个熟悉的故事。",
+    "narration_segments": [
+      {
+        "text": "先别急着回答。",
+        "pause_after": 0.15
+      },
+      {
+        "text": "想想那个熟悉的故事。",
+        "pause_after": 0.15
+      }
+    ],
+    "background": "#F3E3C3",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 560,
+        "y": 255,
+        "scale": 0.66,
+        "pose": "point",
+        "expression": "neutral",
+        "shirt": "#6599D1"
+      }
+    ],
+    "props": [
+      {
+        "type": "node",
+        "x": 1040,
+        "y": 245,
+        "radius": 80,
+        "text": "？"
+      },
+      {
+        "type": "arrow",
+        "x1": 760,
+        "y1": 300,
+        "x2": 920,
+        "y2": 300,
+        "color": "#45A95A"
+      }
+    ],
+    "tail_pad": 0.15
+  },
+  {
+    "id": "s09_story_sheep",
+    "title": "我们从小听过一个故事",
+    "narration": "古人拿羊换米，",
+    "narration_segments": [
+      {
+        "text": "古人拿羊换米，",
+        "pause_after": 0.15
+      }
+    ],
+    "background": "#FFFDF7",
+    "camera": "pan_right",
+    "characters": [
+      {
+        "x": 175,
+        "y": 265,
+        "scale": 0.5,
+        "pose": "walk",
+        "expression": "neutral",
+        "shirt": "#B77B4C",
+        "clothing": "hide",
+        "animation": {
+          "preset": "walk_in",
+          "from_x": -150,
+          "start": 0,
+          "duration": 1.1,
+          "walk_speed": 1.6,
+          "walk_cycle": false
+        }
+      }
+    ],
+    "props": [
+      {
+        "type": "icon",
+        "name": "sheep",
+        "x": 520,
+        "y": 265,
+        "size": 170,
+        "animation": {
+          "preset": "pop",
+          "start": 1.9,
+          "duration": 0.5
+        }
+      },
+      {
+        "type": "exchange",
+        "x1": 640,
+        "y1": 265,
+        "x2": 790,
+        "y2": 265,
+        "animation": {
+          "preset": "grow",
+          "start": 2.15,
+          "duration": 0.5
+        },
+        "width": 15
+      },
+      {
+        "type": "icon",
+        "name": "rice",
+        "x": 940,
+        "y": 265,
+        "size": 170,
+        "animation": {
+          "preset": "pop",
+          "start": 2.4,
+          "duration": 0.5
+        }
+      }
+    ],
+    "animation": {
+      "enabled": true,
+      "blink": true,
+      "oversample": 2
+    },
+    "tail_pad": 0.15
+  },
+  {
+    "id": "s10_fish_shoes",
+    "title": "拿鱼换鞋",
+    "narration": "拿鱼换鞋。",
+    "narration_segments": [
+      {
+        "text": "拿鱼换鞋。",
+        "pause_after": 0.15
+      }
+    ],
+    "background": "#F6EFE2",
+    "camera": "zoom_in",
+    "characters": [],
+    "props": [
+      {
+        "type": "icon",
+        "name": "fish",
+        "x": 430,
+        "y": 280,
+        "size": 190,
+        "animation": {
+          "preset": "pop",
+          "start": 0.05,
+          "duration": 0.5
+        }
+      },
+      {
+        "type": "exchange",
+        "x1": 560,
+        "y1": 280,
+        "x2": 730,
+        "y2": 280,
+        "animation": {
+          "preset": "grow",
+          "start": 0.3,
+          "duration": 0.55
+        },
+        "width": 15
+      },
+      {
+        "type": "icon",
+        "name": "shoes",
+        "x": 860,
+        "y": 280,
+        "size": 190,
+        "animation": {
+          "preset": "pop",
+          "start": 0.6,
+          "duration": 0.5
+        }
+      }
+    ],
+    "animation": {
+      "enabled": true,
+      "blink": true,
+      "oversample": 2
+    },
+    "tail_pad": 0.15
+  },
+  {
+    "id": "s11_stuck",
+    "title": "交易卡住了",
+    "narration": "可我有鱼，你有鞋，你却不想吃鱼。交易卡住了。",
+    "narration_segments": [
+      {
+        "text": "可我有鱼，你有鞋，你却不想吃鱼。",
+        "pause_after": 0.15
+      },
+      {
+        "text": "交易卡住了。",
+        "pause_after": 0.15
+      }
+    ],
+    "background": "#E9F4DD",
+    "camera": "zoom_in",
+    "characters": [],
+    "props": [
+      {
+        "type": "icon",
+        "name": "fish",
+        "x": 400,
+        "y": 280,
+        "size": 170
+      },
+      {
+        "type": "cross",
+        "x": 640,
+        "y": 300,
+        "size": 130
+      },
+      {
+        "type": "icon",
+        "name": "shoes",
+        "x": 880,
+        "y": 280,
+        "size": 170
+      }
+    ],
+    "tail_pad": 0.15
+  },
+  {
+    "id": "s12_accept",
+    "title": "谁都肯收的东西",
+    "narration": "于是大家找来一种谁都肯收的东西，交换就容易了。",
+    "narration_segments": [
+      {
+        "text": "于是大家找来一种谁都肯收的东西，交换就容易了。",
+        "pause_after": 0.15
+      }
+    ],
+    "background": "#EAF6FF",
+    "camera": "zoom_out",
+    "characters": [
+      {
+        "x": 640,
+        "y": 255,
+        "scale": 0.66,
+        "pose": "stand",
+        "expression": "smile",
+        "shirt": "#F0A454"
+      }
+    ],
+    "props": [
+      {
+        "type": "node",
+        "x": 275,
+        "y": 250,
+        "radius": 78,
+        "text": "贝壳"
+      },
+      {
+        "type": "node",
+        "x": 1005,
+        "y": 250,
+        "radius": 78,
+        "text": "金属"
+      }
+    ],
+    "tail_pad": 0.15
+  },
+  {
+    "id": "s13_solved",
+    "title": "钱方便了交换，却不保证安心",
+    "narration": "但这个故事，并不是货币起源唯一的答案。钱解决了交换，却没有承诺，让每个人都安心。",
+    "narration_segments": [
+      {
+        "text": "但这个故事，并不是货币起源唯一的答案。",
+        "pause_after": 0.15
+      },
+      {
+        "text": "钱解决了交换，却没有承诺，让每个人都安心。",
+        "pause_after": 0.15
+      }
+    ],
+    "background": "#F6EFE2",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 420,
+        "y": 265,
+        "scale": 0.6,
+        "pose": "stand",
+        "expression": "smile",
+        "shirt": "#78AEDA"
+      },
+      {
+        "x": 860,
+        "y": 265,
+        "scale": 0.6,
+        "pose": "stand",
+        "expression": "smile",
+        "shirt": "#6599D1"
+      }
+    ],
+    "props": [
+      {
+        "type": "arrow",
+        "x1": 580,
+        "y1": 300,
+        "x2": 700,
+        "y2": 300,
+        "color": "#45A95A"
+      }
+    ],
+    "tail_pad": 0.15
+  }
+]
