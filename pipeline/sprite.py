@@ -28,6 +28,7 @@ SPRITE_FOOT_OFFSET = 438.0
 FALLBACKS = ("{pose}_{expression}", "{pose}", "{expression}", "neutral", "default")
 
 _CACHE: dict[str, tuple[str, int, int]] = {}
+_HEIGHTS: dict[str, dict[str, float]] = {}
 
 
 def _num(value: Any, default: float) -> float:
@@ -45,6 +46,31 @@ def sprite_dir(project: Optional[dict[str, Any]]) -> Optional[Path]:
     if not base:
         return None
     return Path(base) / str(project.get("sprites", "sprites"))
+
+
+def _atlas(base: Path) -> dict[str, float]:
+    """Optional per-sprite height overrides from ``sprites/atlas.json``.
+
+    A sprite is normalised by its opaque bounding box. That is right for a
+    standing figure, but a pose that throws the arms above the head makes the
+    box taller than the body, so the figure would come out smaller than its
+    neighbours. The atlas lets a project pin the height of those few sprites.
+    """
+    key = str(base)
+    if key not in _HEIGHTS:
+        overrides: dict[str, float] = {}
+        manifest = base / "atlas.json"
+        if manifest.is_file():
+            import json
+            try:
+                data = json.loads(manifest.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                data = {}
+            for name, entry in (data.get("sprites") or {}).items():
+                if isinstance(entry, dict) and isinstance(entry.get("height"), (int, float)):
+                    overrides[name] = float(entry["height"])
+        _HEIGHTS[key] = overrides
+    return _HEIGHTS[key]
 
 
 def _load(path: Path) -> tuple[str, int, int]:
@@ -101,9 +127,10 @@ def character_svg(character: dict[str, Any], time: Optional[float] = None,
         state = character_state(character, time, settings, order)
         x, y, scale = state["x"], state["y"] + state["bob"], state["scale"]
 
-    height = SPRITE_FIGURE_HEIGHT
+    base = sprite_dir(project)
+    height = _atlas(base).get(path.stem, SPRITE_FIGURE_HEIGHT) if base else SPRITE_FIGURE_HEIGHT
     width = height * (px_w / px_h) if px_h else height
-    top = y + scale * (SPRITE_FOOT_OFFSET - SPRITE_FIGURE_HEIGHT)
+    top = y + scale * (SPRITE_FOOT_OFFSET - height)
     inner = (f'<image x="{x - scale * width / 2:g}" y="{top:g}" '
              f'width="{scale * width:g}" height="{scale * height:g}" '
              f'preserveAspectRatio="xMidYMid meet" '
