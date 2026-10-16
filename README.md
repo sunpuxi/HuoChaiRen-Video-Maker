@@ -12,6 +12,7 @@
 - `static`、`zoom_in`、`zoom_out`、`pan_left`、`pan_right` 镜头
 - 4× SVG 超采样、偶数像素裁切与缓入缓出，避免细线推镜抖动
 - 镜头时长对齐帧网格，短视频不会因不足一帧的舍入而漂移
+- 可选极简背景层：同色系背景纸片、地面线、角色投影与标题下划线，摆位逐镜轮换
 - macOS 本地中文 TTS、DashScope Qwen3-TTS API，或使用预生成音频
 - 短句级配音：每个镜头可拆成多个独立配音和字幕片段
 - 自动生成 SRT、ASS，并将带样式字幕烧录到发布视频
@@ -173,6 +174,32 @@ cp -R projects/clothing projects/my-video
 
 完整字段约束见 `storyboard.schema.json`。
 
+## 极简背景层
+
+默认关闭。在 `project.json` 中开启后，每个镜头会增加四层低干扰背景元素，用于消除纯色平涂的单调感：
+
+```json
+{
+  "background_style": {
+    "enabled": true,
+    "paper_shape": "auto",
+    "ground": true,
+    "title_stroke": true,
+    "character_shadows": true
+  }
+}
+```
+
+- `paper_shape`：同色系加深 6.5% 的大色块，制造前后层次。`auto` 按镜头顺序在 4 种摆位之间轮换，保证相邻镜头不重复；也可取 `none`、`circle_top_right`、`circle_bottom_left`、`band_bottom`、`circle_top_left`
+- `ground`：角色脚下的地面线，自动避让角色脚底与低处道具
+- `title_stroke`：标题下划线，浅色背景用品牌黄，饱和背景按对比度自动转深墨色
+- `character_shadows`：角色脚下的椭圆投影，随位置和缩放自动生成
+
+四个开关可以单独关闭；单个镜头可用 `"background_style": false` 整体关闭，或用 `"paper_shape": "circle_top_left"` 单独指定摆位。**关闭时渲染输出与不含该功能时逐字节一致**，已有缓存不会失效。
+
+背景可以逐镜换色来形成节奏：相邻镜头使用不同底色（例如 `#FFFDF7`、`#EAF6FF`、`#F6EFE2`、`#E9F4DD`），把 `#F6B95C`、`#CFEBC3` 这类饱和度较高的颜色留给需要强调的镜头。
+
+实现要点：画面被拆成**静态层**（背景、背景纸片、标题、地面线、带文字的 node/bubble 道具）和**动画层**（角色与纯矢量道具）。静态层每镜只渲一次；动画层逐帧渲成透明 PNG，且不含任何文字，所以能跳过系统字体扫描——这正是逐帧渲染从 544 ms/帧降到约 60 ms/帧的原因。`oversample` 只作用于动画镜头，静止镜头仍用 `project.motion_oversample`（默认 4×）。没有 `animation` 的场景走原来的单图路径，不产生额外开销。
 ## 分段配音与字幕
 
 需要让字幕跟随配音短句切换时，在场景中增加 `narration_segments`。每一段会独立生成并缓存配音，程序根据音频真实长度生成字幕时间轴：

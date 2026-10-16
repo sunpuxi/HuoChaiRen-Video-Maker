@@ -13,6 +13,15 @@ ALLOWED_POSES = {"stand", "look_down", "point", "arms_up", "think", "walk"}
 ALLOWED_EXPRESSIONS = {"neutral", "smile", "confused", "surprised", "sad", "angry"}
 ALLOWED_CAMERAS = {"static", "zoom_in", "zoom_out", "pan_left", "pan_right"}
 ALLOWED_PROPS = {"arrow", "cross", "bubble", "node", "mirror", "arc", "star"}
+ALLOWED_PAPER_SHAPES = {
+    "auto",
+    "none",
+    "circle_top_right",
+    "circle_bottom_left",
+    "band_bottom",
+    "circle_top_left",
+}
+BACKDROP_KEYS = {"enabled", "paper_shape", "ground", "title_stroke", "character_shadows"}
 ALLOWED_TTS_ENGINES = {"macos", "dashscope_qwen3"}
 ALLOWED_QWEN_LANGUAGES = {
     "Auto",
@@ -55,6 +64,22 @@ def _resolution(value: Any, label: str, errors: list[str]) -> None:
         errors.append(f"{label} must be [positive_width, positive_height]")
 
 
+def _backdrop(value: Any, label: str, errors: list[str]) -> None:
+    if value is None or isinstance(value, bool):
+        return
+    if not isinstance(value, dict):
+        errors.append(f"{label} must be a boolean or an object")
+        return
+    for key, item in value.items():
+        if key not in BACKDROP_KEYS:
+            errors.append(f"{label}.{key} is not supported")
+        elif key == "paper_shape":
+            if item not in ALLOWED_PAPER_SHAPES:
+                errors.append(f"{label}.paper_shape is not supported: {item}")
+        elif not isinstance(item, bool):
+            errors.append(f"{label}.{key} must be a boolean")
+
+
 def validate(project: dict[str, Any], scenes: Any, project_dir: Path) -> None:
     errors: list[str] = []
     if not isinstance(project, dict):
@@ -68,6 +93,8 @@ def validate(project: dict[str, Any], scenes: Any, project_dir: Path) -> None:
     for key, value in (("fps", project.get("fps")), ("preview.fps", preview.get("fps"))):
         if not isinstance(value, int) or value <= 0:
             errors.append(f"{key} must be a positive integer")
+
+    _backdrop(project.get("background_style"), "project.background_style", errors)
 
     voice = project.get("voice", {})
     if not isinstance(voice, dict):
@@ -176,6 +203,11 @@ def validate(project: dict[str, Any], scenes: Any, project_dir: Path) -> None:
         for prop_index, prop in enumerate(scene.get("props", [])):
             if prop.get("type") not in ALLOWED_PROPS:
                 errors.append(f"{prefix}.props[{prop_index}].type is unsupported")
+
+        _backdrop(scene.get("background_style"), f"{prefix}.background_style", errors)
+        paper_shape = scene.get("paper_shape")
+        if paper_shape is not None and paper_shape not in ALLOWED_PAPER_SHAPES:
+            errors.append(f"{prefix}.paper_shape is not supported: {paper_shape}")
 
         audio_file = scene.get("audio_file")
         if audio_file and not (project_dir / audio_file).exists():

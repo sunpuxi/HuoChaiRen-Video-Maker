@@ -45,7 +45,8 @@
         "color": "#171717",
         "width": 10
       }
-    ]
+    ],
+    "background": "#FFFDF7"
   },
   {
     "id": "scene_02_warm",
@@ -186,7 +187,8 @@
         "y2": 300,
         "color": "#45A95A"
       }
-    ]
+    ],
+    "background": "#F6EFE2"
   },
   {
     "id": "scene_05_layer",
@@ -202,7 +204,7 @@
         "pause_after": 0.2
       }
     ],
-    "background": "#F3E3C3",
+    "background": "#E9F4DD",
     "camera": "pan_right",
     "characters": [
       {
@@ -277,7 +279,8 @@
         "y2": 300,
         "color": "#45A95A"
       }
-    ]
+    ],
+    "background": "#FFFDF7"
   },
   {
     "id": "scene_07_language",
@@ -330,7 +333,8 @@
         "y2": 420,
         "color": "#45A95A"
       }
-    ]
+    ],
+    "background": "#F3E3C3"
   },
   {
     "id": "scene_08_identity",
@@ -518,7 +522,8 @@
         "radius": 70,
         "text": "典礼"
       }
-    ]
+    ],
+    "background": "#FFFDF7"
   },
   {
     "id": "scene_11_rule",
@@ -608,7 +613,8 @@
         "y": 140,
         "width": 200
       }
-    ]
+    ],
+    "background": "#EAF6FF"
   },
   {
     "id": "scene_13_cycle",
@@ -687,7 +693,8 @@
         "height": 125,
         "text": "？"
       }
-    ]
+    ],
+    "background": "#FFFDF7"
   },
   {
     "id": "scene_15_mirror",
@@ -728,7 +735,8 @@
         "y": 185,
         "width": 170
       }
-    ]
+    ],
+    "background": "#F6EFE2"
   },
   {
     "id": "scene_16_close",
@@ -775,6 +783,7 @@
         "y": 150,
         "width": 220
       }
-    ]
+    ],
+    "background": "#EAF6FF"
   }
 ]

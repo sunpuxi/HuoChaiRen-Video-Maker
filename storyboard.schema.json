@@ -73,6 +73,41 @@
           "additionalProperties": true
         }
       },
+      "paper_shape": {
+        "enum": [
+          "auto",
+          "none",
+          "circle_top_right",
+          "circle_bottom_left",
+          "band_bottom",
+          "circle_top_left"
+        ]
+      },
+      "background_style": {
+        "oneOf": [
+          { "type": "boolean" },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "enabled": { "type": "boolean" },
+              "paper_shape": {
+                "enum": [
+                  "auto",
+                  "none",
+                  "circle_top_right",
+                  "circle_bottom_left",
+                  "band_bottom",
+                  "circle_top_left"
+                ]
+              },
+              "ground": { "type": "boolean" },
+              "title_stroke": { "type": "boolean" },
+              "character_shadows": { "type": "boolean" }
+            }
+          }
+        ]
+      },
       "connections": {
         "type": "array",
         "items": {

@@ -20,6 +20,148 @@ def _num(value: Any, default: float) -> float:
         return default
 
 
+# --- optional minimal backdrop ---------------------------------------------
+# Four layers, each at most a few SVG nodes, sized so a frame never carries more
+# than four extra marks: one tone-on-tone paper shape, a ground line, a shadow
+# under every character and a short stroke under the title. Placement rotates
+# per scene so neighbouring shots never repeat the same backdrop.
+ACCENT = "#F5B632"
+PAPER_SHAPES = ("circle_top_right", "circle_bottom_left", "band_bottom", "circle_top_left")
+BACKDROP_DEFAULTS = {
+    "enabled": False,
+    "paper_shape": "auto",
+    "ground": True,
+    "title_stroke": True,
+    "character_shadows": True,
+}
+
+
+def _mix(first: str, second: str, ratio: float) -> str:
+    """Blend two #RRGGBB colours; used for tone-on-tone shapes."""
+    try:
+        left = tuple(int(first[index:index + 2], 16) for index in (1, 3, 5))
+        right = tuple(int(second[index:index + 2], 16) for index in (1, 3, 5))
+    except ValueError:
+        return first
+    mixed = tuple(round(left[i] + (right[i] - left[i]) * ratio) for i in range(3))
+    return "#%02X%02X%02X" % mixed
+
+
+def _luminance(color: str) -> float:
+    try:
+        channels = [int(color[index:index + 2], 16) / 255 for index in (1, 3, 5)]
+    except ValueError:
+        return 1.0
+    linear = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in channels]
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+
+def _contrast(first: str, second: str) -> float:
+    high, low = sorted((_luminance(first), _luminance(second)), reverse=True)
+    return (high + 0.05) / (low + 0.05)
+
+
+def _paper_shape(kind: str, background: str) -> str:
+    tint = _mix(background, INK, 0.065)
+    if kind == "circle_top_right":
+        return f'<circle cx="1220" cy="110" r="260" fill="{tint}"/>'
+    if kind == "circle_bottom_left":
+        return f'<circle cx="60" cy="676" r="225" fill="{tint}"/>'
+    if kind == "band_bottom":
+        # A gently curved floor reads as hand drawn; a straight edge looks printed.
+        return f'<path d="M-80 720 L-80 598 Q640 546 1360 598 L1360 720 Z" fill="{tint}"/>'
+    return f'<circle cx="80" cy="96" r="235" fill="{tint}"/>'
+
+
+def _title_stroke(title: str, background: str) -> str:
+    width = min(300, 46 * len(title) + 40)
+    # Accent yellow disappears on saturated backgrounds, so fall back to ink.
+    colour = ACCENT if _contrast(ACCENT, background) >= 1.55 else _mix(background, INK, 0.30)
+    return (
+        f'<path d="M{640 - width / 2:g} 126 Q640 116 {640 + width / 2:g} 126" fill="none" '
+        f'stroke="{colour}" stroke-width="14" stroke-linecap="round"/>'
+    )
+
+
+def _prop_bottom(prop: dict[str, Any]) -> float:
+    """Lowest edge of a prop, used to keep the ground line clear of shapes."""
+    kind = str(prop.get("type", ""))
+    y = _num(prop.get("y"), 0)
+    if kind == "node":
+        return y + _num(prop.get("radius"), 76)
+    if kind == "mirror":
+        return y + _num(prop.get("height"), 360) / 2
+    if kind == "cross":
+        return y + _num(prop.get("size"), 180) / 2
+    if kind == "star":
+        return y + 43 * _num(prop.get("scale"), 1)
+    if kind == "bubble":
+        return y + _num(prop.get("height"), 130) / 2 + 45
+    if kind == "arrow":
+        return max(_num(prop.get("y1"), 0), _num(prop.get("y2"), 0))
+    return y
+
+
+def _ground_line(scene: dict[str, Any]) -> str:
+    feet = [
+        _num(item.get("y"), 220) + _num(item.get("scale"), 0.7) * 452
+        for item in scene.get("characters", [])
+    ]
+    props = [_prop_bottom(item) for item in scene.get("props", [])]
+    lowest = max([value + 22 for value in feet] + [value + 14 for value in props], default=596)
+    y = int(max(560, min(608, lowest)))
+    return (
+        f'<path d="M96 {y} Q640 {y - 12} 1184 {y}" fill="none" stroke="{INK}" '
+        f'stroke-width="10" stroke-linecap="round" opacity="0.13"/>'
+    )
+
+
+def _character_shadows(scene: dict[str, Any]) -> str:
+    parts = []
+    for item in scene.get("characters", []):
+        x, y = _num(item.get("x"), 640), _num(item.get("y"), 220)
+        scale = _num(item.get("scale"), 0.7)
+        parts.append(
+            f'<ellipse cx="{x:g}" cy="{y + scale * 452:g}" rx="{scale * 96:g}" '
+            f'ry="{scale * 15:g}" fill="{INK}" opacity="0.08"/>'
+        )
+    return "".join(parts)
+
+
+def backdrop_settings(project: dict[str, Any], scene: dict[str, Any]) -> dict[str, Any]:
+    """Merge project level defaults with a per scene override."""
+    settings = dict(BACKDROP_DEFAULTS)
+    for source in (project.get("background_style"), scene.get("background_style")):
+        if isinstance(source, bool):
+            settings["enabled"] = source
+        elif isinstance(source, dict):
+            settings.update({key: value for key, value in source.items() if key in settings})
+    if scene.get("paper_shape"):
+        settings["paper_shape"] = str(scene["paper_shape"])
+    return settings
+
+
+def render_backdrop(scene: dict[str, Any], project: dict[str, Any], index: int = 0) -> str:
+    settings = backdrop_settings(project, scene)
+    if not settings["enabled"]:
+        return ""
+    background = escape(str(scene.get("background", project.get("background", "#FFFDF7"))), quote=True)
+    shape = str(settings["paper_shape"])
+    if shape == "auto":
+        shape = PAPER_SHAPES[index % len(PAPER_SHAPES)]
+    layers = []
+    if shape in PAPER_SHAPES:
+        layers.append(_paper_shape(shape, background))
+    if settings["character_shadows"]:
+        layers.append(_character_shadows(scene))
+    if settings["ground"]:
+        layers.append(_ground_line(scene))
+    title = str(scene.get("title", "")).strip()
+    if settings["title_stroke"] and title:
+        layers.append(_title_stroke(title, background))
+    return "".join(layers)
+
+
 def _face(expression: str) -> str:
     eyes = '<circle cx="-23" cy="-10" r="7"/><circle cx="23" cy="-10" r="7"/>'
     mouths = {
@@ -175,11 +317,17 @@ PROP_RENDERERS = {
 }
 
 
-def render_scene_svg(scene: dict[str, Any], project: dict[str, Any]) -> str:
+def render_scene_svg(
+    scene: dict[str, Any],
+    project: dict[str, Any],
+    index: int = 0,
+) -> str:
     background = escape(str(scene.get("background", project.get("background", "#FFFDF7"))), quote=True)
     title = _text(scene.get("title", ""))
     title_size = int(_num(scene.get("title_size"), 58))
     caption = _text(scene.get("caption", scene.get("narration", "")))
+    backdrop = render_backdrop(scene, project, index)
+    backdrop_svg = f"\n      {backdrop}" if backdrop else ""
 
     connections = []
     for connection in scene.get("connections", []):
@@ -194,7 +342,7 @@ def render_scene_svg(scene: dict[str, Any], project: dict[str, Any]) -> str:
           <text x="640" y="667" text-anchor="middle" class="caption">{caption}</text>'''
 
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
-      <rect width="1280" height="720" fill="{background}"/>
+      <rect width="1280" height="720" fill="{background}"/>{backdrop_svg}
       <defs>
         <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
           <feDropShadow dx="0" dy="7" stdDeviation="0" flood-color="#151515" flood-opacity="0.14"/>

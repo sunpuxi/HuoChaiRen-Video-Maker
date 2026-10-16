@@ -1,11 +1,17 @@
 {
   "title": "人类为什么穿衣服",
   "output_name": "clothing_explainer",
-  "resolution": [1920, 1080],
+  "resolution": [
+    1920,
+    1080
+  ],
   "fps": 30,
   "motion_oversample": 4,
   "preview": {
-    "resolution": [640, 360],
+    "resolution": [
+      640,
+      360
+    ],
     "fps": 12
   },
   "background": "#FFFDF7",
@@ -27,5 +33,8 @@
     "shadow": 1,
     "margin_bottom": 34
   },
-  "font_files": []
+  "font_files": [],
+  "background_style": {
+    "enabled": true
+  }
 }

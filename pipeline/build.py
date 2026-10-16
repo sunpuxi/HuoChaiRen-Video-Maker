@@ -278,7 +278,7 @@ def build_project(
     subtitle_cues: list[dict[str, Any]] = []
     clock = 0.0
 
-    for scene in scenes:
+    for scene_index, scene in enumerate(scenes):
         scene_id = scene["id"]
         audio: Optional[Path] = None
         audio_duration = 0.0
@@ -320,7 +320,7 @@ def build_project(
             rendered_scene = dict(scene)
             rendered_scene["caption"] = ""
 
-        svg = render_scene_svg(rendered_scene, project)
+            svg = render_scene_svg(rendered_scene, project, index=scene_index)
         svg_path = scene_dir / f"{scene_id}.svg"
         svg_path.write_text(svg, encoding="utf-8")
         image_signature = {

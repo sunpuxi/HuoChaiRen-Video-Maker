@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import tempfile
 import unittest
 import wave
@@ -22,6 +23,7 @@ from pipeline.media import (
     validate_video,
 )
 from pipeline.subtitles import write_ass, write_srt
+from pipeline.svg import PAPER_SHAPES, render_scene_svg
 from pipeline.tts import TTSError, synthesize_dashscope_qwen3, tts_cache_signature
 
 
@@ -37,7 +39,6 @@ class FakeHTTPResponse:
 
     def read(self) -> bytes:
         return self.content
-from pipeline.svg import render_scene_svg
 
 
 class ConfigTests(unittest.TestCase):
@@ -429,6 +430,95 @@ class VideoTimelineTests(unittest.TestCase):
         # ... and a short two-scene video keeps the requested cadence instead of
         # drifting a whole frame behind (this pair averaged 11.83 fps before).
         self.assertLess(abs(report["fps"] - self.FPS), 0.25 / report["duration"])
+
+
+class BackdropTests(unittest.TestCase):
+    """The optional backdrop must stay opt-in and never leak into plain frames."""
+
+    SCENE = {
+        "id": "backdrop",
+        "title": "它变成了记号",
+        "characters": [{"x": 470, "y": 255, "scale": 0.66, "pose": "point", "expression": "smile"}],
+        "props": [{"type": "node", "x": 1020, "y": 250, "radius": 80, "text": "记号"}],
+    }
+
+    def _svg(self, *, project_extra=None, scene_extra=None, index=0):
+        project = {"background": "#FFFDF7"}
+        project.update(project_extra or {})
+        scene = dict(self.SCENE)
+        scene.update(scene_extra or {})
+        return render_scene_svg(scene, project, index=index)
+
+    def test_disabled_backdrop_leaves_the_frame_untouched(self) -> None:
+        svg = self._svg()
+        self.assertNotIn("opacity=\"0.13\"", svg)  # ground line
+        self.assertNotIn("opacity=\"0.08\"", svg)  # character shadow
+        self.assertNotIn("<circle cx=\"1220\"", svg)
+        # The background rect must stay glued to <defs> so cache keys of
+        # projects without a backdrop do not change.
+        self.assertIn('<rect width="1280" height="720" fill="#FFFDF7"/>\n      <defs>', svg)
+
+    def test_enabled_backdrop_adds_every_layer(self) -> None:
+        svg = self._svg(project_extra={"background_style": {"enabled": True}})
+        self.assertIn("opacity=\"0.13\"", svg)
+        self.assertIn("opacity=\"0.08\"", svg)
+        self.assertIn('<circle cx="1220" cy="110" r="260"', svg)  # index 0 placement
+        self.assertIn("#F5B632", svg)  # accent title stroke on a light background
+
+    def test_paper_shape_rotates_between_neighbouring_scenes(self) -> None:
+        shapes = [
+            self._svg(project_extra={"background_style": {"enabled": True}}, index=index)
+            for index in range(len(PAPER_SHAPES))
+        ]
+        marks = ['<circle cx="1220" cy="110"', '<circle cx="60" cy="676"', 'Q640 546 1360 598', '<circle cx="80" cy="96"']
+        for svg, mark in zip(shapes, marks):
+            self.assertIn(mark, svg)
+        self.assertEqual(len(set(shapes)), len(shapes))
+
+    def test_title_stroke_falls_back_to_ink_on_saturated_backgrounds(self) -> None:
+        svg = self._svg(
+            project_extra={"background_style": {"enabled": True}},
+            scene_extra={"background": "#F6B95C"},
+        )
+        self.assertNotIn("#F5B632", svg)
+
+    def test_ground_line_clears_low_props(self) -> None:
+        svg = self._svg(
+            project_extra={"background_style": {"enabled": True}},
+            scene_extra={"props": [{"type": "node", "x": 240, "y": 495, "radius": 76, "text": "态度"}]},
+        )
+        line = re.search(r'<path d="M96 (\d+) Q640', svg)
+        self.assertIsNotNone(line)
+        self.assertGreater(int(line.group(1)), 495 + 76)
+
+    def test_single_layer_can_be_switched_off(self) -> None:
+        svg = self._svg(
+            project_extra={"background_style": {"enabled": True, "ground": False, "character_shadows": False}},
+        )
+        self.assertNotIn("opacity=\"0.13\"", svg)
+        self.assertNotIn("opacity=\"0.08\"", svg)
+        self.assertIn('<circle cx="1220" cy="110" r="260"', svg)
+
+    def test_scene_override_wins_over_project(self) -> None:
+        svg = self._svg(
+            project_extra={"background_style": {"enabled": True}},
+            scene_extra={"background_style": False},
+        )
+        self.assertNotIn("opacity=\"0.13\"", svg)
+
+    def test_unsupported_paper_shape_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "project.json").write_text(
+                json.dumps({"resolution": [1280, 720], "fps": 30, "preview": {"resolution": [640, 360], "fps": 12}}),
+                encoding="utf-8",
+            )
+            (root / "storyboard.json").write_text(
+                json.dumps([{"id": "bad", "title": "标题", "duration": 2, "paper_shape": "triangle"}]),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "paper_shape"):
+                resolve_project(root)
 
 
 if __name__ == "__main__":
