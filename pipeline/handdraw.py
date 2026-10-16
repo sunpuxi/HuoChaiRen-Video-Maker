@@ -37,7 +37,7 @@ INK = "#141414"
 SKIN = "#FBF7EF"
 FUR_DARK = "#8A5C31"
 
-STYLES = ("line", "hand")
+STYLES = ("line", "hand", "sprite")
 DEFAULT_STYLE = "line"
 
 HAIR_STYLES = ("spikes", "bowl", "ring", "flat", "afro", "combover", "none")
@@ -76,6 +76,8 @@ DEFAULTS: dict[str, Any] = {
 METRICS: dict[str, dict[str, float]] = {
     "line": {"foot": 452.0, "shadow_rx": 96.0, "shadow_ry": 15.0},
     "hand": {"foot": 399.0, "shadow_rx": 118.0, "shadow_ry": 17.0},
+    # sprite figures normalise to the line figure's footing, so they reuse it
+    "sprite": {"foot": 452.0, "shadow_rx": 104.0, "shadow_ry": 16.0},
 }
 
 

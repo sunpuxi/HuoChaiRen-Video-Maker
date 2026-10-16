@@ -4,7 +4,7 @@ import math
 from html import escape
 from typing import Any, Optional
 
-from . import handdraw, handprops
+from . import handdraw, handprops, sprite
 from .animate import character_state, prop_state, scene_animation
 
 
@@ -67,7 +67,7 @@ def _contrast(first: str, second: str) -> float:
 
 def _paper_shape(kind: str, background: str, art_style: str = "line") -> str:
     tint = _mix(background, INK, 0.065)
-    if art_style == "hand":
+    if art_style in ("hand", "sprite"):
         return handprops.paper_shape(kind, tint)
     if kind == "circle_top_right":
         return f'<circle cx="1220" cy="110" r="260" fill="{tint}"/>'
@@ -83,7 +83,7 @@ def _title_stroke(title: str, background: str, art_style: str = "line") -> str:
     width = min(300, 46 * len(title) + 40)
     # Accent yellow disappears on saturated backgrounds, so fall back to ink.
     colour = ACCENT if _contrast(ACCENT, background) >= 1.55 else _mix(background, INK, 0.30)
-    if art_style == "hand":
+    if art_style in ("hand", "sprite"):
         return handprops.title_stroke(640 - width / 2, 640 + width / 2, 126, colour)
     return (
         f'<path d="M{640 - width / 2:g} 126 Q640 116 {640 + width / 2:g} 126" fill="none" '
@@ -246,9 +246,12 @@ def character_svg(
     settings: Optional[dict[str, Any]] = None,
     order: int = 0,
     art_style: str = "line",
+    project: Optional[dict[str, Any]] = None,
 ) -> str:
     if art_style == "hand":
         return handdraw.character_svg(character, time, settings, order)
+    if art_style == "sprite":
+        return sprite.character_svg(character, time, settings, order, project)
     x = _num(character.get("x"), 640)
     y = _num(character.get("y"), 220)
     scale = _num(character.get("scale"), 0.7)
@@ -489,7 +492,7 @@ def _exchange(prop: dict[str, Any]) -> str:
 
 def render_prop(prop: dict[str, Any], project: dict[str, Any]) -> str:
     """Draw a prop with the pen that matches the project's art style."""
-    if handdraw.art_style_for({}, project) == "hand":
+    if handdraw.art_style_for({}, project) in ("hand", "sprite"):
         renderer = handprops.PROP_RENDERERS.get(str(prop.get("type", "")))
         if renderer is not None:
             return renderer(prop)
@@ -543,7 +546,7 @@ def render_scene_svg(
         props.append(render_prop(render_item, project))
     characters = [
         character_svg(item, time, animation, order,
-                      art_style=handdraw.art_style_for(item, project))
+                      art_style=handdraw.art_style_for(item, project), project=project)
         for order, item in enumerate(scene.get("characters", []))
     ]
 

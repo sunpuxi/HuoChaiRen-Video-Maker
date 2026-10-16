@@ -17,7 +17,7 @@ from .tts import (
 
 
 ALLOWED_POSES = {"stand", "look_down", "point", "arms_up", "think", "walk"}
-ALLOWED_ART_STYLES = {"line", "hand"}
+ALLOWED_ART_STYLES = {"line", "hand", "sprite"}
 ALLOWED_HAIR = {"spikes", "bowl", "ring", "flat", "afro", "combover", "none"}
 ALLOWED_BROWS = {"worried", "angry", "raised", "flat", "unibrow"}
 ALLOWED_NOSES = {"hook", "potato", "pointy", "tiny"}
@@ -170,6 +170,8 @@ def resolve_project(path: Union[str, Path]) -> tuple[Path, dict[str, Any], list[
     project = load_json(project_dir / "project.json")
     storyboard = load_json(project_dir / "storyboard.json")
     validate(project, storyboard, project_dir)
+    # the sprite style needs to find <project>/sprites at render time
+    project["_dir"] = str(project_dir)
     return project_dir, project, storyboard
 
 
@@ -350,6 +352,10 @@ def validate(project: dict[str, Any], scenes: Any, project_dir: Path) -> None:
             errors.append(f"{key} must be a positive integer")
 
     _backdrop(project.get("background_style"), "project.background_style", errors)
+
+    sprites = project.get("sprites")
+    if sprites is not None and (not isinstance(sprites, str) or not sprites.strip()):
+        errors.append("project.sprites must be a non-empty directory name")
 
     art_style = project.get("art_style")
     if art_style is not None and art_style not in ALLOWED_ART_STYLES:
