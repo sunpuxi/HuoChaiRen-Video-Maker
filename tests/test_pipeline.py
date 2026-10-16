@@ -18,7 +18,7 @@ from pipeline.animate import (
     split_layers,
     strip_background,
 )
-from pipeline.config import resolve_project
+from pipeline.config import load_env_file, resolve_project
 from pipeline.media import (
     _video_filter,
     align_duration_to_frames,
@@ -137,6 +137,37 @@ class ConfigTests(unittest.TestCase):
                 self._minimax_project(root, voice)
                 with self.assertRaisesRegex(ValueError, message):
                     resolve_project(root)
+
+    def test_env_file_fills_missing_variables(self) -> None:
+        with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, {}, clear=True):
+            env_file = Path(temp) / ".env"
+            env_file.write_text(
+                "# comment\n"
+                "MINIMAX_API_KEY=from-file\n"
+                'QUOTED="quoted value"\n'
+                "export EXPORTED=exported-value\n"
+                "\n"
+                "NOT_A_PAIR\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(load_env_file(env_file), 3)
+            self.assertEqual(os.environ["MINIMAX_API_KEY"], "from-file")
+            self.assertEqual(os.environ["QUOTED"], "quoted value")
+            self.assertEqual(os.environ["EXPORTED"], "exported-value")
+            self.assertNotIn("NOT_A_PAIR", os.environ)
+
+    def test_env_file_never_overrides_the_real_environment(self) -> None:
+        with tempfile.TemporaryDirectory() as temp, patch.dict(
+            os.environ, {"MINIMAX_API_KEY": "from-shell"}, clear=True
+        ):
+            env_file = Path(temp) / ".env"
+            env_file.write_text("MINIMAX_API_KEY=from-file\n", encoding="utf-8")
+            self.assertEqual(load_env_file(env_file), 0)
+            self.assertEqual(os.environ["MINIMAX_API_KEY"], "from-shell")
+
+    def test_missing_env_file_is_not_an_error(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            self.assertEqual(load_env_file(Path(temp) / "nope.env"), 0)
 
     def test_valid_project_loads(self) -> None:
         root = Path(__file__).resolve().parents[1]

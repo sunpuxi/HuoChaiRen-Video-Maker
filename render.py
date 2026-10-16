@@ -4,8 +4,10 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
 
 from pipeline.build import build_project
+from pipeline.config import load_env_file
 
 
 def main() -> int:
@@ -21,6 +23,12 @@ def main() -> int:
     args = parser.parse_args()
 
     selected_quality = "final" if args.final else "preview"
+    # Local secret files are optional and never override the real environment.
+    for env_file in (
+        Path(args.project).expanduser() / ".env",
+        Path(__file__).resolve().parent / ".env",
+    ):
+        load_env_file(env_file)
     try:
         report = build_project(
             args.project,

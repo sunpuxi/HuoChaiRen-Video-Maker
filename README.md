@@ -53,6 +53,8 @@ npm install
 export DASHSCOPE_API_KEY="你的 API Key"
 ```
 
+也可以把密钥写进仓库根目录的 `.env` 让 `render.py` 自动加载，见下文「使用 MiniMax 语音合成」。
+
 然后将项目的 `voice` 配置改为：
 
 ```json
@@ -82,6 +84,14 @@ export DASHSCOPE_API_KEY="你的 API Key"
 ```bash
 export MINIMAX_API_KEY="你的 API Key"
 ```
+
+不想每次导出，也可以把密钥放在项目根目录的 `.env`（该文件已被 `.gitignore` 忽略）：
+
+```
+MINIMAX_API_KEY=sk-api-...
+```
+
+`python3 render.py` 启动时会依次读取**项目目录**和仓库根目录下的 `.env`，**已存在的环境变量优先，不会被文件覆盖**。密钥不会写入缓存、构建报告或任何提交内容。
 
 ```json
 {

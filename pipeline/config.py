@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any, Union
@@ -116,6 +117,36 @@ ALLOWED_QWEN_LANGUAGES = {
     "French",
     "Russian",
 }
+
+
+def load_env_file(path: Path) -> int:
+    """Load ``KEY=VALUE`` pairs from a local ``.env`` file.
+
+    Only fills variables that are not already set, so a real environment
+    variable always wins and a stale file cannot shadow the shell. Quotes and
+    an optional ``export`` prefix are accepted. Returns how many keys were set.
+    """
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return 0
+
+    loaded = 0
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        if line.startswith("export "):
+            line = line[len("export ") :].strip()
+        key, _, value = line.partition("=")
+        key = key.strip()
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+            value = value[1:-1]
+        if key and key not in os.environ:
+            os.environ[key] = value
+            loaded += 1
+    return loaded
 
 
 def load_json(path: Path) -> Any:
