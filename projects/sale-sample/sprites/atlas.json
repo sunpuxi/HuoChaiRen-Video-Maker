@@ -11,7 +11,8 @@
     "arms_up_surprised": {
       "file": "arms_up_surprised.png",
       "sha256": "b5bf0c1c1a44d045",
-      "bytes": 493350
+      "bytes": 493350,
+      "height": 696
     },
     "look_down_neutral": {
       "file": "look_down_neutral.png",
@@ -52,5 +53,9 @@
     "point_neutral": "variant 2",
     "stand_sad": "variant 3",
     "walk_neutral": "variant 2"
+  },
+  "normalisation": {
+    "default": 524,
+    "note": "精灵按不透明外框归一化。举手过头会让外框高于身体，arms_up_surprised 的实测身体只占外框 75.3%，故单独指定高度。"
   }
 }

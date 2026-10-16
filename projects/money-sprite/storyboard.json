@@ -14,8 +14,8 @@
     "characters": [
       {
         "x": 640,
-        "y": 255,
-        "scale": 0.7,
+        "y": 240,
+        "scale": 0.8,
         "pose": "think",
         "expression": "confused",
         "shirt": "#6599D1"
@@ -55,16 +55,16 @@
     "characters": [
       {
         "x": 360,
-        "y": 265,
-        "scale": 0.6,
+        "y": 270,
+        "scale": 0.62,
         "pose": "stand",
         "expression": "smile",
         "shirt": "#78AEDA"
       },
       {
         "x": 920,
-        "y": 265,
-        "scale": 0.6,
+        "y": 270,
+        "scale": 0.62,
         "pose": "stand",
         "expression": "smile",
         "shirt": "#F0A454"
@@ -84,7 +84,6 @@
   },
   {
     "id": "s03_why_poor",
-    "title": "为什么还是缺钱？",
     "narration": "可今天，我们明明比古人富得多，却还是不安心。",
     "narration_segments": [
       {
@@ -97,8 +96,8 @@
     "characters": [
       {
         "x": 640,
-        "y": 250,
-        "scale": 0.66,
+        "y": 240,
+        "scale": 0.8,
         "pose": "arms_up",
         "expression": "surprised",
         "shirt": "#6599D1"
@@ -137,8 +136,8 @@
     "characters": [
       {
         "x": 640,
-        "y": 255,
-        "scale": 0.66,
+        "y": 240,
+        "scale": 0.8,
         "pose": "look_down",
         "expression": "neutral",
         "shirt": "#7D9FC6",
@@ -188,8 +187,8 @@
     "characters": [
       {
         "x": 600,
-        "y": 255,
-        "scale": 0.66,
+        "y": 240,
+        "scale": 0.8,
         "pose": "think",
         "expression": "confused",
         "shirt": "#F0A454"
@@ -222,8 +221,8 @@
     "characters": [
       {
         "x": 275,
-        "y": 265,
-        "scale": 0.58,
+        "y": 240,
+        "scale": 0.8,
         "pose": "stand",
         "expression": "sad",
         "shirt": "#6599D1"
@@ -256,7 +255,6 @@
   },
   {
     "id": "s07_vanish",
-    "title": "假如钱突然消失",
     "narration": "假如明天，钱突然消失，我们是不是就自由了？",
     "narration_segments": [
       {
@@ -269,8 +267,8 @@
     "characters": [
       {
         "x": 640,
-        "y": 255,
-        "scale": 0.68,
+        "y": 240,
+        "scale": 0.8,
         "pose": "arms_up",
         "expression": "surprised",
         "shirt": "#78AEDA"
@@ -312,8 +310,8 @@
     "characters": [
       {
         "x": 560,
-        "y": 255,
-        "scale": 0.66,
+        "y": 240,
+        "scale": 0.8,
         "pose": "point",
         "expression": "neutral",
         "shirt": "#6599D1"
@@ -353,8 +351,8 @@
     "characters": [
       {
         "x": 175,
-        "y": 265,
-        "scale": 0.5,
+        "y": 240,
+        "scale": 0.8,
         "pose": "walk",
         "expression": "neutral",
         "shirt": "#B77B4C",
@@ -530,8 +528,8 @@
     "characters": [
       {
         "x": 640,
-        "y": 255,
-        "scale": 0.66,
+        "y": 240,
+        "scale": 0.8,
         "pose": "stand",
         "expression": "smile",
         "shirt": "#F0A454"
@@ -574,16 +572,16 @@
     "characters": [
       {
         "x": 420,
-        "y": 265,
-        "scale": 0.6,
+        "y": 270,
+        "scale": 0.62,
         "pose": "stand",
         "expression": "smile",
         "shirt": "#78AEDA"
       },
       {
         "x": 860,
-        "y": 265,
-        "scale": 0.6,
+        "y": 270,
+        "scale": 0.62,
         "pose": "stand",
         "expression": "smile",
         "shirt": "#6599D1"
