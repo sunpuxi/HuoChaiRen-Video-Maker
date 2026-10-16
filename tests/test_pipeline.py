@@ -33,7 +33,15 @@ from pipeline.media import (
 )
 from pipeline.subtitles import write_ass, write_srt
 from pipeline.svg import ICONS, PAPER_SHAPES, render_scene_svg
-from pipeline.tts import TTSError, synthesize_dashscope_qwen3, tts_cache_signature
+from pipeline.tts import (
+    DEFAULT_MINIMAX_ENDPOINT,
+    TTSError,
+    minimax_payload,
+    strip_control_markers,
+    synthesize_dashscope_qwen3,
+    synthesize_minimax,
+    tts_cache_signature,
+)
 
 
 class FakeHTTPResponse:
@@ -51,6 +59,85 @@ class FakeHTTPResponse:
 
 
 class ConfigTests(unittest.TestCase):
+    def _minimax_project(self, root: Path, voice: dict) -> None:
+        (root / "project.json").write_text(
+            json.dumps(
+                {
+                    "resolution": [1280, 720],
+                    "fps": 30,
+                    "preview": {"resolution": [640, 360], "fps": 12},
+                    "voice": {"engine": "minimax", **voice},
+                }
+            ),
+            encoding="utf-8",
+        )
+        (root / "storyboard.json").write_text(
+            json.dumps([{"id": "s1", "narration": "测试。", "duration": 2, "camera": "static"}]),
+            encoding="utf-8",
+        )
+
+    def test_minimax_voice_settings_are_accepted(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self._minimax_project(
+                root,
+                {
+                    "model": "speech-2.8-hd",
+                    "voice_id": "Chinese (Mandarin)_Lyrical_Voice",
+                    "speed": 0.95,
+                    "vol": 1.0,
+                    "pitch": 0,
+                    "emotion": "calm",
+                    "language_boost": "Chinese",
+                    "text_normalization_mode": "quality",
+                    "format": "mp3",
+                    "sample_rate": 32000,
+                    "api_key_env": "MINIMAX_API_KEY",
+                    "timeout": 90,
+                    "max_retries": 3,
+                },
+            )
+            _, project, _ = resolve_project(root)
+            self.assertEqual(project["voice"]["engine"], "minimax")
+
+    def test_minimax_rejects_unknown_model(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self._minimax_project(root, {"model": "speech-9-hd"})
+            with self.assertRaisesRegex(ValueError, "voice.model is not supported"):
+                resolve_project(root)
+
+    def test_minimax_rejects_whisper_on_2_8_models(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self._minimax_project(root, {"model": "speech-2.8-hd", "emotion": "whisper"})
+            with self.assertRaisesRegex(ValueError, "whisper"):
+                resolve_project(root)
+
+    def test_minimax_rejects_out_of_range_settings(self) -> None:
+        cases = {
+            "speed": ({"speed": 3.0}, "voice.speed"),
+            "vol": ({"vol": 0}, "voice.vol"),
+            "pitch": ({"pitch": 20}, "voice.pitch"),
+            "emotion": ({"emotion": "smug"}, "voice.emotion"),
+            "format": ({"format": "ogg"}, "voice.format"),
+            "sample_rate": ({"sample_rate": 48000}, "voice.sample_rate"),
+            "channel": ({"channel": 3}, "voice.channel"),
+            "bitrate": ({"bitrate": 96000}, "voice.bitrate"),
+            "language_boost": ({"language_boost": "Klingon"}, "voice.language_boost"),
+            "normalization": ({"text_normalization_mode": "fast"}, "text_normalization_mode"),
+            "pronunciation": ({"pronunciation_dict": {"tone": [1, 2]}}, "pronunciation_dict"),
+            "endpoint": ({"endpoint": "wss://api.minimax.cn/ws/v1/t2a_v2"}, "voice.endpoint"),
+            "key_env": ({"api_key_env": "not a name"}, "voice.api_key_env"),
+            "retries": ({"max_retries": 9}, "voice.max_retries"),
+        }
+        for label, (voice, message) in cases.items():
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                self._minimax_project(root, voice)
+                with self.assertRaisesRegex(ValueError, message):
+                    resolve_project(root)
+
     def test_valid_project_loads(self) -> None:
         root = Path(__file__).resolve().parents[1]
         project_dir, project, scenes = resolve_project(root / "projects" / "clothing")
@@ -318,6 +405,191 @@ class TTSTests(unittest.TestCase):
         )
         self.assertEqual(signature["voice"], "Elias")
         self.assertNotIn("api_key_env", signature)
+
+    def test_minimax_decodes_hex_audio(self) -> None:
+        audio = b"ID3-minimax-audio"
+        api_response = json.dumps(
+            {
+                "data": {"audio": audio.hex(), "status": 2},
+                "extra_info": {"audio_length": 1234},
+                "trace_id": "trace-1",
+                "base_resp": {"status_code": 0, "status_msg": "success"},
+            }
+        ).encode("utf-8")
+        config = {
+            "engine": "minimax",
+            "model": "speech-2.8-hd",
+            "voice_id": "male-qn-qingse",
+            "max_retries": 1,
+        }
+
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / "voice.mp3"
+            with patch.dict(os.environ, {"MINIMAX_API_KEY": "test-secret"}), patch(
+                "pipeline.tts.urlopen", return_value=FakeHTTPResponse(api_response)
+            ) as mocked_open:
+                synthesize_minimax("测试语音。", output, config)
+
+            self.assertEqual(output.read_bytes(), audio)
+            post_request = mocked_open.call_args_list[0].args[0]
+            self.assertEqual(post_request.full_url, DEFAULT_MINIMAX_ENDPOINT)
+            self.assertEqual(post_request.get_header("Authorization"), "Bearer test-secret")
+            payload = json.loads(post_request.data.decode("utf-8"))
+            self.assertEqual(payload["model"], "speech-2.8-hd")
+            self.assertFalse(payload["stream"])
+            self.assertEqual(payload["output_format"], "hex")
+            self.assertEqual(payload["voice_setting"]["voice_id"], "male-qn-qingse")
+
+    def test_minimax_downloads_url_audio(self) -> None:
+        audio = b"RIFF-minimax-audio"
+        api_response = json.dumps(
+            {
+                "data": {"audio": "https://cdn.minimax.cn/generated.mp3"},
+                "base_resp": {"status_code": 0, "status_msg": "success"},
+            }
+        ).encode("utf-8")
+        config = {"engine": "minimax", "max_retries": 1}
+
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / "voice.mp3"
+            with patch.dict(os.environ, {"MINIMAX_API_KEY": "test-secret"}), patch(
+                "pipeline.tts.urlopen",
+                side_effect=[FakeHTTPResponse(api_response), FakeHTTPResponse(audio)],
+            ):
+                synthesize_minimax("测试语音。", output, config)
+
+            self.assertEqual(output.read_bytes(), audio)
+
+    def test_minimax_requires_api_key(self) -> None:
+        with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, {}, clear=True):
+            with self.assertRaisesRegex(TTSError, "MINIMAX_API_KEY"):
+                synthesize_minimax(
+                    "测试语音。", Path(temp) / "voice.mp3", {"engine": "minimax"}
+                )
+
+    def test_minimax_rejects_oversized_text_before_request(self) -> None:
+        with tempfile.TemporaryDirectory() as temp, patch.dict(
+            os.environ, {"MINIMAX_API_KEY": "test-secret"}
+        ):
+            with patch("pipeline.tts.urlopen") as mocked_open:
+                with self.assertRaisesRegex(TTSError, "10000-character"):
+                    synthesize_minimax(
+                        "字" * 10_001, Path(temp) / "voice.mp3", {"engine": "minimax"}
+                    )
+            mocked_open.assert_not_called()
+
+    def test_minimax_reports_business_error_without_retry(self) -> None:
+        api_response = json.dumps(
+            {
+                "data": None,
+                "trace_id": "trace-9",
+                "base_resp": {"status_code": 1004, "status_msg": "authentication failed"},
+            }
+        ).encode("utf-8")
+
+        with tempfile.TemporaryDirectory() as temp, patch.dict(
+            os.environ, {"MINIMAX_API_KEY": "bad-key"}
+        ):
+            with patch(
+                "pipeline.tts.urlopen", return_value=FakeHTTPResponse(api_response)
+            ) as mocked_open:
+                with self.assertRaisesRegex(TTSError, "1004.*authentication failed"):
+                    synthesize_minimax(
+                        "测试语音。",
+                        Path(temp) / "voice.mp3",
+                        {"engine": "minimax", "max_retries": 3},
+                    )
+            self.assertEqual(mocked_open.call_count, 1)
+
+    def test_minimax_retries_rate_limit_then_succeeds(self) -> None:
+        limited = json.dumps(
+            {"base_resp": {"status_code": 1002, "status_msg": "rate limit"}}
+        ).encode("utf-8")
+        audio = b"ID3-late"
+        success = json.dumps(
+            {
+                "data": {"audio": audio.hex()},
+                "base_resp": {"status_code": 0, "status_msg": "success"},
+            }
+        ).encode("utf-8")
+
+        with tempfile.TemporaryDirectory() as temp, patch.dict(
+            os.environ, {"MINIMAX_API_KEY": "test-secret"}
+        ), patch("pipeline.tts.time.sleep") as mocked_sleep:
+            output = Path(temp) / "voice.mp3"
+            with patch(
+                "pipeline.tts.urlopen",
+                side_effect=[FakeHTTPResponse(limited), FakeHTTPResponse(success)],
+            ) as mocked_open:
+                synthesize_minimax("测试语音。", output, {"engine": "minimax", "max_retries": 3})
+
+            self.assertEqual(output.read_bytes(), audio)
+            self.assertEqual(mocked_open.call_count, 2)
+            mocked_sleep.assert_called_once()
+
+    def test_minimax_rejects_empty_audio(self) -> None:
+        api_response = json.dumps(
+            {
+                "data": {"audio": ""},
+                "base_resp": {"status_code": 0, "status_msg": "success"},
+            }
+        ).encode("utf-8")
+
+        with tempfile.TemporaryDirectory() as temp, patch.dict(
+            os.environ, {"MINIMAX_API_KEY": "test-secret"}
+        ):
+            with patch("pipeline.tts.urlopen", return_value=FakeHTTPResponse(api_response)):
+                with self.assertRaisesRegex(TTSError, "did not include audio data"):
+                    synthesize_minimax(
+                        "测试语音。", Path(temp) / "voice.mp3", {"engine": "minimax"}
+                    )
+
+    def test_minimax_payload_maps_storyboard_knobs(self) -> None:
+        payload = minimax_payload(
+            "你有没有想过(sighs)<#0.4#>一件很怪的事？",
+            {
+                "engine": "minimax",
+                "model": "speech-2.6-turbo",
+                "voice_id": "Chinese (Mandarin)_Lyrical_Voice",
+                "speed": 0.95,
+                "vol": 1.2,
+                "pitch": -1,
+                "emotion": "calm",
+                "language_boost": "Chinese",
+                "text_normalization_mode": "quality",
+                "format": "wav",
+                "sample_rate": 44100,
+                "bitrate": 256000,
+                "pronunciation_dict": {"tone": ["处理/(chu3)(li3)"]},
+            },
+        )
+        self.assertEqual(payload["voice_setting"]["speed"], 0.95)
+        self.assertEqual(payload["voice_setting"]["emotion"], "calm")
+        self.assertEqual(payload["voice_setting"]["pitch"], -1)
+        self.assertEqual(payload["language_boost"], "Chinese")
+        self.assertEqual(payload["text_normalization_mode"], "quality")
+        self.assertEqual(payload["audio_setting"]["sample_rate"], 44100)
+        self.assertEqual(payload["audio_setting"]["format"], "wav")
+        self.assertNotIn("bitrate", payload["audio_setting"])  # bitrate only applies to mp3
+        self.assertEqual(payload["pronunciation_dict"]["tone"], ["处理/(chu3)(li3)"])
+
+    def test_minimax_cache_signature_tracks_voice_settings(self) -> None:
+        base = {"engine": "minimax", "model": "speech-2.8-hd", "voice_id": "v1", "speed": 1.0}
+        signature = tts_cache_signature({**base, "api_key_env": "PRIVATE_KEY_NAME"})
+        self.assertEqual(signature["voice_id"], "v1")
+        self.assertNotIn("api_key_env", signature)
+        self.assertNotEqual(signature, tts_cache_signature({**base, "speed": 0.9}))
+        self.assertNotEqual(signature, tts_cache_signature({**base, "emotion": "calm"}))
+
+    def test_strip_control_markers_leaves_plain_text_untouched(self) -> None:
+        for text in ("你有没有想过一件很怪的事？", "钱，到底是什么？", "1000 年前的羊。"):
+            self.assertEqual(strip_control_markers(text), text)
+
+    def test_strip_control_markers_removes_speech_only_tokens(self) -> None:
+        self.assertEqual(strip_control_markers("古人(sighs)拿羊换米。"), "古人拿羊换米。")
+        self.assertEqual(strip_control_markers("你听<#0.4#>，钱在说话。"), "你听，钱在说话。")
+        self.assertEqual(strip_control_markers("啊<#0.2#>（真的）？"), "啊（真的）？")
+        self.assertEqual(strip_control_markers("(laughs) 从前的钱"), "从前的钱")
 
 
 class VideoTimelineTests(unittest.TestCase):

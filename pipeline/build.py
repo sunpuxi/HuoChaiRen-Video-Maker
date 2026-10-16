@@ -38,7 +38,12 @@ from .media import (
 )
 from .subtitles import render_subtitle_svg, write_ass, write_srt
 from .svg import render_scene_svg
-from .tts import synthesize_dashscope_qwen3, tts_cache_signature
+from .tts import (
+    strip_control_markers,
+    synthesize_dashscope_qwen3,
+    synthesize_minimax,
+    tts_cache_signature,
+)
 
 
 @dataclass
@@ -115,6 +120,9 @@ def _ensure_audio(
             if engine == "dashscope_qwen3":
                 raw = Path(temp_dir) / "voice.wav"
                 synthesize_dashscope_qwen3(text, raw, tts)
+            elif engine == "minimax":
+                raw = Path(temp_dir) / f"voice.{tts.get('format', 'mp3')}"
+                synthesize_minimax(text, raw, tts)
             else:
                 raw = Path(temp_dir) / "voice.aiff"
                 run(
@@ -138,7 +146,8 @@ def _ensure_audio(
                         "macOS speech synthesis produced an empty track. Run outside a restricted "
                         "sandbox or provide scene.audio_file."
                     ) from exc
-                raise RuntimeError("DashScope Qwen3-TTS produced an invalid audio track") from exc
+                label = "MiniMax" if engine == "minimax" else "DashScope Qwen3-TTS"
+                raise RuntimeError(f"{label} produced an invalid audio track") from exc
             convert_audio(raw, output)
 
     levels = loudness(output)
@@ -179,7 +188,7 @@ def _ensure_segmented_audio(
         cue_end = clock + spoken_duration + pause_after
         cues.append(
             {
-                "text": segment.get("caption", segment["text"]),
+                "text": strip_control_markers(segment.get("caption", segment["text"])),
                 "start": clock,
                 "end": cue_end,
                 "audio_duration": spoken_duration,
@@ -214,7 +223,7 @@ def _muted_segment_cues(scene: dict[str, Any]) -> tuple[float, list[dict[str, An
         end = clock + spoken_duration + pause_after
         cues.append(
             {
-                "text": segment.get("caption", segment["text"]),
+                "text": strip_control_markers(segment.get("caption", segment["text"])),
                 "start": clock,
                 "end": end,
                 "audio_duration": spoken_duration,
@@ -321,7 +330,9 @@ def build_project(
         clip_duration = align_duration_to_frames(clip_duration, fps)
 
         if not local_cues:
-            caption = str(scene.get("caption", scene.get("narration", ""))).strip()
+            caption = strip_control_markers(
+                str(scene.get("caption", scene.get("narration", "")))
+            ).strip()
             if caption:
                 caption_duration = audio_duration if audio_duration else clip_duration
                 local_cues = [{"text": caption, "start": 0.0, "end": caption_duration}]

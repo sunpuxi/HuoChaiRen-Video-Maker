@@ -7,7 +7,12 @@ from typing import Any, Union
 from urllib.parse import urlparse
 
 from .svg import ICONS
-from .tts import DEFAULT_DASHSCOPE_ENDPOINT
+from .tts import (
+    DEFAULT_DASHSCOPE_ENDPOINT,
+    DEFAULT_MINIMAX_ENDPOINT,
+    MINIMAX_DEFAULT_MODEL,
+    MINIMAX_DEFAULT_VOICE,
+)
 
 
 ALLOWED_POSES = {"stand", "look_down", "point", "arms_up", "think", "walk"}
@@ -28,7 +33,76 @@ ALLOWED_PAPER_SHAPES = {
     "circle_top_left",
 }
 BACKDROP_KEYS = {"enabled", "paper_shape", "ground", "title_stroke", "character_shadows"}
-ALLOWED_TTS_ENGINES = {"macos", "dashscope_qwen3"}
+ALLOWED_TTS_ENGINES = {"macos", "dashscope_qwen3", "minimax"}
+ALLOWED_MINIMAX_MODELS = {
+    "speech-2.8-hd",
+    "speech-2.8-turbo",
+    "speech-2.6-hd",
+    "speech-2.6-turbo",
+    "speech-02-hd",
+    "speech-02-turbo",
+    "speech-01-hd",
+    "speech-01-turbo",
+}
+# Interjection tags are a 2.8-series feature; older models ignore them silently.
+MINIMAX_INTERJECTION_MODELS = {"speech-2.8-hd", "speech-2.8-turbo"}
+MINIMAX_EMOTIONS = {
+    "happy",
+    "sad",
+    "angry",
+    "fearful",
+    "disgusted",
+    "surprised",
+    "calm",
+    "fluent",
+    "whisper",
+}
+MINIMAX_LANGUAGE_BOOST = {
+    "Chinese",
+    "Chinese,Yue",
+    "English",
+    "Japanese",
+    "Korean",
+    "Spanish",
+    "French",
+    "German",
+    "Portuguese",
+    "Italian",
+    "Russian",
+    "Arabic",
+    "Turkish",
+    "Dutch",
+    "Ukrainian",
+    "Vietnamese",
+    "Indonesian",
+    "Thai",
+    "Polish",
+    "Romanian",
+    "Greek",
+    "Czech",
+    "Finnish",
+    "Hindi",
+    "Bulgarian",
+    "Danish",
+    "Hebrew",
+    "Malay",
+    "Persian",
+    "Slovak",
+    "Swedish",
+    "Croatian",
+    "Filipino",
+    "Hungarian",
+    "Norwegian",
+    "Slovenian",
+    "Catalan",
+    "Nynorsk",
+    "Tamil",
+    "Afrikaans",
+    "auto",
+}
+MINIMAX_AUDIO_FORMATS = {"mp3", "pcm", "flac", "wav"}
+MINIMAX_SAMPLE_RATES = {8000, 16000, 22050, 24000, 32000, 44100}
+ALLOWED_MINIMAX_NORMALIZATION = {"basic", "quality"}
 ALLOWED_QWEN_LANGUAGES = {
     "Auto",
     "Chinese",
@@ -117,6 +191,112 @@ def _backdrop(value: Any, label: str, errors: list[str]) -> None:
             errors.append(f"{label}.{key} must be a boolean")
 
 
+def _remote_transport(
+    voice: dict[str, Any],
+    errors: list[str],
+    *,
+    default_endpoint: str,
+    default_key_env: str,
+) -> None:
+    api_key_env = voice.get("api_key_env", default_key_env)
+    if not isinstance(api_key_env, str) or not re.fullmatch(
+        r"[A-Za-z_][A-Za-z0-9_]*", api_key_env
+    ):
+        errors.append("project.voice.api_key_env must be an environment variable name")
+    endpoint = voice.get("endpoint", default_endpoint)
+    try:
+        parsed_endpoint = urlparse(endpoint) if isinstance(endpoint, str) else None
+        valid_endpoint = bool(
+            parsed_endpoint
+            and parsed_endpoint.scheme in {"http", "https"}
+            and parsed_endpoint.netloc
+        )
+    except ValueError:
+        valid_endpoint = False
+    if not valid_endpoint:
+        errors.append("project.voice.endpoint must be an HTTP(S) URL")
+    timeout = voice.get("timeout", 90)
+    if not isinstance(timeout, (int, float)) or timeout <= 0 or timeout > 300:
+        errors.append("project.voice.timeout must be greater than 0 and at most 300")
+    retries = voice.get("max_retries", 3)
+    if not isinstance(retries, int) or not 1 <= retries <= 5:
+        errors.append("project.voice.max_retries must be an integer from 1 to 5")
+
+
+def _minimax_voice(voice: dict[str, Any], errors: list[str]) -> None:
+    model = voice.get("model", MINIMAX_DEFAULT_MODEL)
+    if model not in ALLOWED_MINIMAX_MODELS:
+        allowed = ", ".join(sorted(ALLOWED_MINIMAX_MODELS))
+        errors.append(f"project.voice.model is not supported: {model} (choose from {allowed})")
+    voice_id = voice.get("voice_id", voice.get("voice", MINIMAX_DEFAULT_VOICE))
+    if not isinstance(voice_id, str) or not voice_id.strip():
+        errors.append("project.voice.voice_id must be a non-empty string")
+
+    speed = voice.get("speed", 1.0)
+    if not isinstance(speed, (int, float)) or isinstance(speed, bool) or not 0.5 <= speed <= 2:
+        errors.append("project.voice.speed must be a number from 0.5 to 2")
+    vol = voice.get("vol", 1.0)
+    if not isinstance(vol, (int, float)) or isinstance(vol, bool) or not 0 < vol <= 10:
+        errors.append("project.voice.vol must be a number greater than 0 and at most 10")
+    pitch = voice.get("pitch", 0)
+    if not isinstance(pitch, int) or isinstance(pitch, bool) or not -12 <= pitch <= 12:
+        errors.append("project.voice.pitch must be an integer from -12 to 12")
+
+    emotion = voice.get("emotion")
+    if emotion is not None and emotion not in MINIMAX_EMOTIONS:
+        allowed = ", ".join(sorted(MINIMAX_EMOTIONS))
+        errors.append(f"project.voice.emotion is not supported: {emotion} (choose from {allowed})")
+    if emotion == "whisper" and model in MINIMAX_INTERJECTION_MODELS:
+        errors.append("project.voice.emotion whisper is not supported by the speech-2.8 models")
+
+    language_boost = voice.get("language_boost", "auto")
+    if language_boost is not None and language_boost not in MINIMAX_LANGUAGE_BOOST:
+        errors.append(f"project.voice.language_boost is not supported: {language_boost}")
+
+    audio_format = voice.get("format", "mp3")
+    if audio_format not in MINIMAX_AUDIO_FORMATS:
+        allowed = ", ".join(sorted(MINIMAX_AUDIO_FORMATS))
+        errors.append(f"project.voice.format is not supported: {audio_format} (choose from {allowed})")
+    sample_rate = voice.get("sample_rate", 32000)
+    if sample_rate not in MINIMAX_SAMPLE_RATES:
+        allowed = ", ".join(str(rate) for rate in sorted(MINIMAX_SAMPLE_RATES))
+        errors.append(
+            f"project.voice.sample_rate is not supported: {sample_rate} (choose from {allowed})"
+        )
+    channel = voice.get("channel", 1)
+    if channel not in {1, 2}:
+        errors.append("project.voice.channel must be 1 or 2")
+    bitrate = voice.get("bitrate", 128000)
+    if bitrate not in {32000, 64000, 128000, 256000}:
+        errors.append("project.voice.bitrate must be 32000, 64000, 128000, or 256000")
+
+    normalization = voice.get("text_normalization_mode")
+    if normalization is not None and normalization not in ALLOWED_MINIMAX_NORMALIZATION:
+        errors.append(
+            "project.voice.text_normalization_mode must be basic or quality"
+        )
+
+    pronunciation = voice.get("pronunciation_dict")
+    if pronunciation is not None:
+        if not isinstance(pronunciation, dict) or not isinstance(
+            pronunciation.get("tone"), list
+        ):
+            errors.append("project.voice.pronunciation_dict must be an object with a tone array")
+        elif not all(
+            isinstance(item, str) and "/" in item for item in pronunciation["tone"]
+        ):
+            errors.append(
+                "project.voice.pronunciation_dict.tone entries must be 'original/replacement' strings"
+            )
+
+    _remote_transport(
+        voice,
+        errors,
+        default_endpoint=DEFAULT_MINIMAX_ENDPOINT,
+        default_key_env="MINIMAX_API_KEY",
+    )
+
+
 def validate(project: dict[str, Any], scenes: Any, project_dir: Path) -> None:
     errors: list[str] = []
     if not isinstance(project, dict):
@@ -144,6 +324,8 @@ def validate(project: dict[str, Any], scenes: Any, project_dir: Path) -> None:
             rate = voice.get("rate", 210)
             if not isinstance(rate, int) or rate <= 0:
                 errors.append("project.voice.rate must be a positive integer")
+        elif engine == "minimax":
+            _minimax_voice(voice, errors)
         else:
             for key, default in (("model", "qwen3-tts-flash"), ("voice", "Cherry")):
                 value = voice.get(key, default)
@@ -152,29 +334,12 @@ def validate(project: dict[str, Any], scenes: Any, project_dir: Path) -> None:
             language = voice.get("language_type", "Chinese")
             if language not in ALLOWED_QWEN_LANGUAGES:
                 errors.append(f"project.voice.language_type is not supported: {language}")
-            api_key_env = voice.get("api_key_env", "DASHSCOPE_API_KEY")
-            if not isinstance(api_key_env, str) or not re.fullmatch(
-                r"[A-Za-z_][A-Za-z0-9_]*", api_key_env
-            ):
-                errors.append("project.voice.api_key_env must be an environment variable name")
-            endpoint = voice.get("endpoint", DEFAULT_DASHSCOPE_ENDPOINT)
-            try:
-                parsed_endpoint = urlparse(endpoint) if isinstance(endpoint, str) else None
-                valid_endpoint = bool(
-                    parsed_endpoint
-                    and parsed_endpoint.scheme in {"http", "https"}
-                    and parsed_endpoint.netloc
-                )
-            except ValueError:
-                valid_endpoint = False
-            if not valid_endpoint:
-                errors.append("project.voice.endpoint must be an HTTP(S) URL")
-            timeout = voice.get("timeout", 90)
-            if not isinstance(timeout, (int, float)) or timeout <= 0 or timeout > 300:
-                errors.append("project.voice.timeout must be greater than 0 and at most 300")
-            retries = voice.get("max_retries", 3)
-            if not isinstance(retries, int) or not 1 <= retries <= 5:
-                errors.append("project.voice.max_retries must be an integer from 1 to 5")
+            _remote_transport(
+                voice,
+                errors,
+                default_endpoint=DEFAULT_DASHSCOPE_ENDPOINT,
+                default_key_env="DASHSCOPE_API_KEY",
+            )
 
     seen: set[str] = set()
     for index, scene in enumerate(scenes):

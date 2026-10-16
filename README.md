@@ -14,8 +14,9 @@
 - 镜头时长对齐帧网格，短视频不会因不足一帧的舍入而漂移
 - 可选极简背景层：同色系背景纸片、地面线、角色投影与标题下划线，摆位逐镜轮换
 - 可选逐帧动画：角色入场、走路循环、眨眼；动画镜头可继续叠加推拉运镜
-- macOS 本地中文 TTS、DashScope Qwen3-TTS API，或使用预生成音频
+- macOS 本地中文 TTS、DashScope Qwen3-TTS、MiniMax 语音合成 API，或使用预生成音频
 - 短句级配音：每个镜头可拆成多个独立配音和字幕片段
+- 配音文本支持停顿标记与语气词，字幕自动剔除这些控制符
 - 自动生成 SRT、ASS，并将带样式字幕烧录到发布视频
 - 根据真实音频长度自动计算镜头时长
 - 图片、音频和镜头三级内容哈希缓存
@@ -30,6 +31,7 @@
 - FFmpeg 与 FFprobe
 - macOS `say`（仅使用 macOS 本地配音时需要）
 - DashScope API Key（仅使用 Qwen3-TTS 云端配音时需要）
+- MiniMax API Key（仅使用 MiniMax 云端配音时需要）
 
 ## 安装
 
@@ -72,6 +74,66 @@ export DASHSCOPE_API_KEY="你的 API Key"
 每个 `narration_segment` 会独立请求语音。返回的临时音频会立即下载、转成 48kHz 单声道 WAV，并进入内容哈希缓存；再次渲染相同文本、模型和音色时不会重复调用 API。API 遇到限流或临时服务错误时会自动重试。
 
 如果使用业务空间专属域名，可在 `voice` 中用完整的 `endpoint` 覆盖默认地址。密钥仅从 `api_key_env` 指定的环境变量读取，不会写入缓存或构建报告。
+
+## 使用 MiniMax 语音合成
+
+管线支持 MiniMax 开放平台的同步语音合成接口（`POST /v1/t2a_v2`，非流式）。渲染是离线批处理，一次请求拿回整段音频即可，因此没有走 WebSocket 流式通道——两者返回的音频一致，而流式的复杂度对成片没有收益。
+
+```bash
+export MINIMAX_API_KEY="你的 API Key"
+```
+
+```json
+{
+  "voice": {
+    "engine": "minimax",
+    "model": "speech-2.8-hd",
+    "voice_id": "male-qn-qingse",
+    "speed": 0.95,
+    "vol": 1.0,
+    "pitch": 0,
+    "emotion": "calm",
+    "language_boost": "Chinese",
+    "text_normalization_mode": "basic",
+    "format": "mp3",
+    "sample_rate": 32000,
+    "api_key_env": "MINIMAX_API_KEY",
+    "timeout": 90,
+    "max_retries": 3
+  }
+}
+```
+
+| 字段 | 取值 | 说明 |
+| --- | --- | --- |
+| `model` | `speech-2.8-hd`（默认）、`speech-2.8-turbo`、`speech-2.6-hd`、`speech-2.6-turbo`、`speech-02-hd`、`speech-02-turbo`、`speech-01-hd`、`speech-01-turbo` | `hd` 适合成片，`turbo` 更快更便宜 |
+| `voice_id` | 系统音色、复刻音色或 `timbre_weights` 混音 | 用控制台的音色列表或 Get Voice API 查询 |
+| `speed` / `vol` / `pitch` | `0.5–2` / `(0, 10]` / `-12–12` | 建议语速留在 `0.9–1.05`，加速会连同韵律一起压扁 |
+| `emotion` | `happy`、`sad`、`angry`、`fearful`、`disgusted`、`surprised`、`calm`、`fluent`、`whisper`（后两者仅 2.6 系列） | 不填时模型按文本自动选择，通常比手动指定更自然 |
+| `language_boost` | 语言名或 `auto`（默认） | 中英混排时用 `auto` |
+| `text_normalization_mode` | `basic`、`quality` | `quality` 用 LLM 归一化数字/日期/货币，仅非流式且 2.6/2.8 生效 |
+| `format` / `sample_rate` / `bitrate` / `channel` | `mp3`/`pcm`/`flac`/`wav`、`8000`–`44100`、`32000`–`256000`（仅 mp3）、`1`/`2` | 管线最终统一转成 48kHz 单声道 WAV |
+
+音频里可以直接写控制标记，模型会照做，字幕不会显示它们：
+
+| 写法 | 作用 |
+| --- | --- |
+| `<#0.4#>` | 在该处停顿 0.4 秒，范围 `0.01–99.99`，可用于句读呼吸 |
+| `(sighs)` `(laughs)` `(breath)` `(emm)` … | 语气词，仅 `speech-2.8-hd` / `speech-2.8-turbo` 支持 |
+| `处理/(chu3)(li3)` | 通过 `pronunciation_dict` 指定多音字读法，也支持 IPA 与粤语拼音 |
+
+```json
+{
+  "narration_segments": [
+    { "text": "你有没有想过<#0.3#>一件很怪的事？", "pause_after": 0.25 },
+    { "text": "钱，到底是什么(sighs)？", "caption": "钱，到底是什么？" }
+  ]
+}
+```
+
+`text` 是交给 TTS 的文字，`caption` 是字幕文字；只写 `text` 时，管线会自动去掉 `<#…#>` 与语气词标记再生成字幕。
+
+缓存键包含模型、音色、`speed`/`vol`/`pitch`/`emotion`/归一化等所有影响音频的参数，因此调参后会自动重新合成，未变的镜头继续命中缓存。密钥只从 `api_key_env` 读取。华北地区可以把 `endpoint` 换成 `https://api-bj.minimaxi.com/v1/t2a_v2` 降低首包延迟；接口返回业务错误码时（`1001` 超时、`1002` 限流、`1039` TPM 限流）会按 `max_retries` 退避重试，其余错误立即失败并打印 `status_code` 与 `status_msg`。
 
 ## 渲染示例
 
@@ -289,8 +351,8 @@ cp -R projects/clothing projects/my-video
 }
 ```
 
-- `text`：交给 TTS 的文字，也是未设置 `caption` 时的字幕文字。
-- `caption`：可选的显示文本，适合简化口语或手动换行。
+- `text`：交给 TTS 的文字，也是未设置 `caption` 时的字幕文字；其中的 `<#0.4#>`、`(sighs)` 等语音控制标记不会出现在字幕里。
+- `caption`：可选的显示文本，适合简化口语或手动换行；设置后完全按原样显示。
 - `audio_file`：可选的片段音频；设置后该片段不调用 TTS。
 - `pause_after`：片段结束后的静音秒数，字幕会保持到停顿结束。
 
