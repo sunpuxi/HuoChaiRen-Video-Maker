@@ -1,0 +1,40 @@
+{
+  "title": "为什么人类发明了钱，却反而越来越缺钱？",
+  "output_name": "money_sample",
+  "resolution": [
+    1920,
+    1080
+  ],
+  "fps": 30,
+  "motion_oversample": 4,
+  "preview": {
+    "resolution": [
+      640,
+      360
+    ],
+    "fps": 12
+  },
+  "background": "#FFFDF7",
+  "minimum_scene_duration": 2.6,
+  "tail_pad": 0.35,
+  "voice": {
+    "engine": "macos",
+    "name": "Tingting",
+    "rate": 185
+  },
+  "subtitles": {
+    "enabled": true,
+    "font_name": "PingFang SC",
+    "font_size": 42,
+    "color": "#FFFFFF",
+    "background_color": "#171717B8",
+    "outline_color": "#171717",
+    "outline": 2,
+    "shadow": 1,
+    "margin_bottom": 34
+  },
+  "font_files": [],
+  "background_style": {
+    "enabled": true
+  }
+}
