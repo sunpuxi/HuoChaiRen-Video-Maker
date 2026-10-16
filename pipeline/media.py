@@ -414,6 +414,114 @@ def concatenate(clips: Sequence[Path], output: Path, manifest: Path) -> None:
     )
 
 
+def rasterize_svg_batch(
+    renderer_script: Path,
+    items: Sequence[tuple[Path, Path]],
+    width: int,
+    height: int,
+    *,
+    transparent: bool = False,
+    fonts: Sequence[Path] = (),
+) -> None:
+    """Rasterise a whole frame sequence in one process.
+
+    Starting a renderer per frame would reload the system fonts every time,
+    which costs more than the drawing itself.
+    """
+    if not items:
+        return
+    batch_script = renderer_script.with_name("render_svg_batch.cjs")
+    with tempfile.TemporaryDirectory(prefix="stickman-batch-") as temp:
+        manifest = Path(temp) / "manifest.json"
+        manifest.write_text(
+            json.dumps(
+                [
+                    {
+                        "svg": str(svg_path),
+                        "png": str(png_path),
+                        "width": width,
+                        "height": height,
+                        "transparent": transparent,
+                        "fonts": [str(item) for item in fonts],
+                    }
+                    for svg_path, png_path in items
+                ]
+            ),
+            encoding="utf-8",
+        )
+        run(["node", str(batch_script), str(manifest)])
+
+
+def render_animated_clip(
+    base_image: Path,
+    frame_pattern: Path,
+    audio: Optional[Path],
+    output: Path,
+    *,
+    width: int,
+    height: int,
+    fps: int,
+    clip_duration: float,
+    camera: str,
+    quality: str,
+) -> None:
+    """Composite a static base layer with one transparent frame per tick."""
+    output.parent.mkdir(parents=True, exist_ok=True)
+    clip_duration = align_duration_to_frames(clip_duration, fps)
+    video_filter = _video_filter(camera, width, height, fps, clip_duration)
+    preset = "veryfast" if quality == "preview" else "medium"
+    crf = "27" if quality == "preview" else "18"
+    command = [
+        "ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-y",
+        "-loop",
+        "1",
+        "-framerate",
+        str(fps),
+        "-i",
+        str(base_image),
+        "-framerate",
+        str(fps),
+        "-i",
+        str(frame_pattern),
+    ]
+    if audio:
+        command += ["-i", str(audio)]
+    else:
+        command += ["-f", "lavfi", "-i", "anullsrc=r=48000:cl=mono"]
+    command += [
+        "-filter_complex",
+        f"[0:v][1:v]overlay=0:0:format=auto[composited];"
+        f"[composited]{video_filter}[v];"
+        f"[2:a]aresample=48000,apad=pad_dur={clip_duration:.3f}[a]",
+        "-map",
+        "[v]",
+        "-map",
+        "[a]",
+        "-t",
+        f"{clip_duration:.3f}",
+        "-r",
+        str(fps),
+        "-c:v",
+        "libx264",
+        "-preset",
+        preset,
+        "-crf",
+        crf,
+        "-pix_fmt",
+        "yuv420p",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "160k",
+        str(output),
+    ]
+    run(command)
+
+
 def contact_sheet(video: Path, output: Path, timestamps: Sequence[float]) -> None:
     if not timestamps:
         raise ValueError("contact sheet requires at least one timestamp")

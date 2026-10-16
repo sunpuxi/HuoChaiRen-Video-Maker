@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import os
 import re
@@ -9,6 +10,12 @@ import wave
 from pathlib import Path
 from unittest.mock import patch
 
+from pipeline.animate import (
+    ANIMATION_VERSION,
+    animation_signature,
+    has_animated_content,
+    split_layers,
+)
 from pipeline.config import resolve_project
 from pipeline.media import (
     _video_filter,
@@ -518,6 +525,110 @@ class BackdropTests(unittest.TestCase):
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ValueError, "paper_shape"):
+                resolve_project(root)
+
+
+class AnimationTests(unittest.TestCase):
+    """Per-frame animation must be opt-in, deterministic and layer-safe."""
+
+    PROJECT = {"background": "#FFFDF7", "background_style": {"enabled": True}}
+    SCENE = {
+        "id": "walk",
+        "title": "走路",
+        "narration": "旁白",
+        "background": "#FFFDF7",
+        "camera": "pan_right",
+        "animation": {"enabled": True, "blink": True},
+        "characters": [
+            {
+                "x": 640,
+                "y": 250,
+                "scale": 0.7,
+                "pose": "stand",
+                "expression": "smile",
+                "shirt": "#6599D1",
+                "animation": {"preset": "walk_in", "from_x": -200, "duration": 1.2},
+            }
+        ],
+        "props": [{"type": "node", "x": 200, "y": 250, "text": "标签"}],
+    }
+
+    def _frame(self, t, scene=None):
+        return render_scene_svg(scene or self.SCENE, self.PROJECT, index=0, time=t)
+
+    def test_scene_without_animation_renders_the_old_way(self) -> None:
+        plain = {key: value for key, value in self.SCENE.items() if key != "animation"}
+        self.assertEqual(render_scene_svg(plain, self.PROJECT, index=0),
+                         render_scene_svg(plain, self.PROJECT, index=0, time=0.0))
+
+    def test_walk_in_moves_from_off_screen_to_the_target(self) -> None:
+        start, middle, end = self._frame(0.0), self._frame(0.5), self._frame(1.4)
+        self.assertIn("translate(-200", start)
+        self.assertIn("translate(640", end)
+        self.assertNotEqual(start, middle)
+
+    def test_walk_cycle_swings_the_limbs(self) -> None:
+        first, second = self._frame(1.4), self._frame(1.4 + 0.28)  # half a cycle apart
+        self.assertNotEqual(first, second)
+        self.assertNotIn('translate(-200', first)  # already arrived, still walking on the spot
+
+    def test_frames_are_deterministic(self) -> None:
+        self.assertEqual(self._frame(0.83), self._frame(0.83))
+
+    def test_pop_in_grows_from_nothing(self) -> None:
+        scene = copy.deepcopy(self.SCENE)
+        scene["characters"][0]["animation"] = {"preset": "pop_in", "start": 0.2, "duration": 0.5}
+        hidden = render_scene_svg(scene, self.PROJECT, index=0, time=0.1)
+        shown = render_scene_svg(scene, self.PROJECT, index=0, time=1.2)
+        self.assertIn("scale(0)", hidden)
+        self.assertIn("scale(0.7)", shown)
+
+    def test_blink_closes_the_eyes(self) -> None:
+        open_frame = self._frame(1.0)
+        blink_start = 3.1 * 2  # start of the third blink window
+        closed_frame = self._frame(blink_start + 0.07, {**self.SCENE, "characters": [
+            {**self.SCENE["characters"][0], "animation": {"preset": "none"}}]})
+        self.assertIn('<circle cx="-23" cy="-10" r="7"', open_frame)
+        self.assertIn('<ellipse cx="-23" cy="-10" rx="7"', closed_frame)
+
+    def test_layers_keep_text_on_the_static_base(self) -> None:
+        base, layer = split_layers(self.SCENE, self.PROJECT)
+        base_svg = render_scene_svg(base, self.PROJECT, index=0)
+        start = render_scene_svg(layer, self.PROJECT, index=0, time=0.0)
+        later = render_scene_svg(layer, self.PROJECT, index=0, time=1.4)
+        self.assertIn("走路", base_svg)          # title stays on the base layer
+        self.assertIn("标签", base_svg)          # node label keeps its fonts
+        self.assertNotIn("<circle cx=\"0\" cy=\"0\" r=\"86\"", base_svg)  # no character on the base
+        self.assertNotIn("<text", start)         # animated layer can skip the font scan
+        self.assertIn("translate(-200", start)
+        self.assertNotEqual(start, later)        # the layer really animates
+
+    def test_animated_scene_is_detected(self) -> None:
+        self.assertTrue(has_animated_content(self.SCENE))
+        self.assertFalse(has_animated_content({**self.SCENE, "animation": {"enabled": True, "blink": False},
+                                               "characters": [{**self.SCENE["characters"][0],
+                                                               "animation": {"preset": "none"}}]}))
+        self.assertFalse(has_animated_content({key: value for key, value in self.SCENE.items()
+                                               if key != "animation"}))
+
+    def test_clip_signature_tracks_the_renderer_version(self) -> None:
+        signature = animation_signature(self.SCENE)
+        self.assertEqual(signature["version"], ANIMATION_VERSION)
+        self.assertEqual(signature["characters"][0]["preset"], "walk_in")
+
+    def test_invalid_animation_preset_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "project.json").write_text(
+                json.dumps({"resolution": [1280, 720], "fps": 30, "preview": {"resolution": [640, 360], "fps": 12}}),
+                encoding="utf-8",
+            )
+            (root / "storyboard.json").write_text(
+                json.dumps([{"id": "bad", "duration": 2, "animation": {"enabled": True},
+                             "characters": [{"animation": {"preset": "teleport"}}]}]),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "preset"):
                 resolve_project(root)
 
 

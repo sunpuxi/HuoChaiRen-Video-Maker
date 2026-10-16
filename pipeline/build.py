@@ -9,6 +9,12 @@ from pathlib import Path
 from typing import Any, Optional
 
 from . import PIPELINE_VERSION
+from .animate import (
+    animation_signature,
+    has_animated_content,
+    scene_animation,
+    split_layers,
+)
 from .config import resolve_project
 from .media import (
     align_duration_to_frames,
@@ -22,6 +28,8 @@ from .media import (
     ffmpeg_filter_available,
     loudness,
     rasterize_svg,
+    rasterize_svg_batch,
+    render_animated_clip,
     render_scene_clip,
     require_commands,
     run,
@@ -40,6 +48,8 @@ class CacheStats:
     image_misses: int = 0
     clip_hits: int = 0
     clip_misses: int = 0
+    animation_frames_rendered: int = 0
+    animation_frames_skipped: int = 0
     subtitle_hits: int = 0
     subtitle_misses: int = 0
 
@@ -320,6 +330,20 @@ def build_project(
             rendered_scene = dict(scene)
             rendered_scene["caption"] = ""
 
+        # A scene that animates is rendered as a static base layer plus one
+        # transparent frame per tick; everything else keeps the single-image
+        # path, so unanimated scenes pay nothing for this feature.
+        animation = scene_animation(scene)
+        animated = animation is not None and has_animated_content(scene)
+        scene_oversample = int(animation["oversample"]) if animated else oversample
+        scene_oversample = max(1, min(6, scene_oversample))
+        raster_width = width * scene_oversample
+        raster_height = height * scene_oversample
+
+        if animated:
+            base_scene, layer_scene = split_layers(rendered_scene, project)
+            svg = render_scene_svg(base_scene, project, index=scene_index)
+        else:
             svg = render_scene_svg(rendered_scene, project, index=scene_index)
         svg_path = scene_dir / f"{scene_id}.svg"
         svg_path.write_text(svg, encoding="utf-8")
@@ -356,26 +380,74 @@ def build_project(
             "height": height,
             "fps": fps,
             "quality": quality,
-            "oversample": oversample,
+            "oversample": scene_oversample,
             "pipeline": PIPELINE_VERSION,
         }
+        frame_count = 0
+        frame_pattern = scene_dir / f"frames_{scene_id}" / "frame_%04d.png"
+        if animated:
+            clip_signature["animation"] = animation_signature(scene)
+            frame_count = max(1, round(clip_duration * fps))
         clip_key = _digest(clip_signature)
         cached_clip = cache_dir / "clips" / f"{clip_key}.mp4"
         if cached_clip.exists() and not force:
             stats.clip_hits += 1
+            stats.animation_frames_skipped += frame_count
         else:
             stats.clip_misses += 1
-            render_scene_clip(
-                cached_image,
-                audio,
-                cached_clip,
-                width=width,
-                height=height,
-                fps=fps,
-                clip_duration=clip_duration,
-                camera=scene.get("camera", "zoom_in"),
-                quality=quality,
-            )
+            if animated:
+                frame_dir = frame_pattern.parent
+                if frame_dir.exists():
+                    shutil.rmtree(frame_dir)
+                frame_dir.mkdir(parents=True, exist_ok=True)
+                layer_pattern = frame_dir / "layer_%04d.png"
+                pairs = []
+                for frame_index in range(frame_count):
+                    frame_svg = frame_dir / f"frame_{frame_index:04d}.svg"
+                    frame_svg.write_text(
+                        render_scene_svg(
+                            layer_scene,
+                            project,
+                            index=scene_index,
+                            time=frame_index / fps,
+                        ),
+                        encoding="utf-8",
+                    )
+                    pairs.append((frame_svg, frame_dir / f"layer_{frame_index:04d}.png"))
+                stats.animation_frames_rendered += frame_count
+                rasterize_svg_batch(
+                    renderer,
+                    pairs,
+                    raster_width,
+                    raster_height,
+                    transparent=True,
+                    fonts=(),
+                )
+                render_animated_clip(
+                    cached_image,
+                    layer_pattern,
+                    audio,
+                    cached_clip,
+                    width=width,
+                    height=height,
+                    fps=fps,
+                    clip_duration=clip_duration,
+                    camera=scene.get("camera", "zoom_in"),
+                    quality=quality,
+                )
+                shutil.rmtree(frame_dir, ignore_errors=True)
+            else:
+                render_scene_clip(
+                    cached_image,
+                    audio,
+                    cached_clip,
+                    width=width,
+                    height=height,
+                    fps=fps,
+                    clip_duration=clip_duration,
+                    camera=scene.get("camera", "zoom_in"),
+                    quality=quality,
+                )
         clip_path = scene_dir / f"{scene_id}.mp4"
         _copy_if_changed(cached_clip, clip_path)
         clips.append(clip_path)

@@ -13,6 +13,9 @@ ALLOWED_POSES = {"stand", "look_down", "point", "arms_up", "think", "walk"}
 ALLOWED_EXPRESSIONS = {"neutral", "smile", "confused", "surprised", "sad", "angry"}
 ALLOWED_CAMERAS = {"static", "zoom_in", "zoom_out", "pan_left", "pan_right"}
 ALLOWED_PROPS = {"arrow", "cross", "bubble", "node", "mirror", "arc", "star"}
+ALLOWED_ANIMATION_PRESETS = {"none", "walk_in", "slide_in", "pop_in"}
+SCENE_ANIMATION_KEYS = {"enabled", "blink", "blink_period", "oversample", "walk_cycle"}
+CHARACTER_ANIMATION_KEYS = {"preset", "start", "duration", "from_x", "walk_speed", "walk_cycle", "blink"}
 ALLOWED_PAPER_SHAPES = {
     "auto",
     "none",
@@ -62,6 +65,37 @@ def _resolution(value: Any, label: str, errors: list[str]) -> None:
         or not all(isinstance(item, int) and item > 0 for item in value)
     ):
         errors.append(f"{label} must be [positive_width, positive_height]")
+
+
+def _animation(value: Any, label: str, errors: list[str], *, keys: set, allow_bool: bool) -> None:
+    if value is None:
+        return
+    if isinstance(value, bool):
+        if not allow_bool:
+            errors.append(f"{label} must be an object")
+        return
+    if not isinstance(value, dict):
+        errors.append(f"{label} must be an object")
+        return
+    for key, item in value.items():
+        if key not in keys:
+            errors.append(f"{label}.{key} is not supported")
+            continue
+        if key == "preset":
+            if item not in ALLOWED_ANIMATION_PRESETS:
+                errors.append(f"{label}.preset is not supported: {item}")
+        elif key == "oversample":
+            if not isinstance(item, int) or not 1 <= item <= 6:
+                errors.append(f"{label}.oversample must be an integer between 1 and 6")
+        elif key in {"blink", "walk_cycle", "enabled"}:
+            if not isinstance(item, bool):
+                errors.append(f"{label}.{key} must be a boolean")
+        elif key == "from_x":
+            # Characters can enter from off-screen, so this one may be negative.
+            if not isinstance(item, (int, float)):
+                errors.append(f"{label}.from_x must be a number")
+        elif not isinstance(item, (int, float)) or item < 0:
+            errors.append(f"{label}.{key} must be zero or greater")
 
 
 def _backdrop(value: Any, label: str, errors: list[str]) -> None:
@@ -199,6 +233,13 @@ def validate(project: dict[str, Any], scenes: Any, project_dir: Path) -> None:
                 errors.append(f"{prefix}.characters[{char_index}].pose is unsupported")
             if character.get("expression", "neutral") not in ALLOWED_EXPRESSIONS:
                 errors.append(f"{prefix}.characters[{char_index}].expression is unsupported")
+            _animation(
+                character.get("animation"),
+                f"{prefix}.characters[{char_index}].animation",
+                errors,
+                keys=CHARACTER_ANIMATION_KEYS,
+                allow_bool=True,
+            )
 
         for prop_index, prop in enumerate(scene.get("props", [])):
             if prop.get("type") not in ALLOWED_PROPS:
@@ -208,6 +249,9 @@ def validate(project: dict[str, Any], scenes: Any, project_dir: Path) -> None:
         paper_shape = scene.get("paper_shape")
         if paper_shape is not None and paper_shape not in ALLOWED_PAPER_SHAPES:
             errors.append(f"{prefix}.paper_shape is not supported: {paper_shape}")
+
+        _animation(scene.get("animation"), f"{prefix}.animation", errors,
+                   keys=SCENE_ANIMATION_KEYS, allow_bool=True)
 
         audio_file = scene.get("audio_file")
         if audio_file and not (project_dir / audio_file).exists():

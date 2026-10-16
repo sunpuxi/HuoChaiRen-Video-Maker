@@ -55,7 +55,25 @@
             },
             "shirt": { "type": "string" },
             "skin": { "type": "string" },
-            "clothing": { "enum": ["shirt", "hide"] }
+            "clothing": { "enum": ["shirt", "hide"] },
+            "animation": {
+              "oneOf": [
+                { "type": "boolean" },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "preset": { "enum": ["none", "walk_in", "slide_in", "pop_in"] },
+                    "start": { "type": "number", "minimum": 0 },
+                    "duration": { "type": "number", "minimum": 0 },
+                    "from_x": { "type": "number" },
+                    "walk_speed": { "type": "number", "minimum": 0 },
+                    "walk_cycle": { "type": "boolean" },
+                    "blink": { "type": "boolean" }
+                  }
+                }
+              ]
+            }
           },
           "additionalProperties": false
         }
@@ -104,6 +122,22 @@
               "ground": { "type": "boolean" },
               "title_stroke": { "type": "boolean" },
               "character_shadows": { "type": "boolean" }
+            }
+          }
+        ]
+      },
+      "animation": {
+        "oneOf": [
+          { "type": "boolean" },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "enabled": { "type": "boolean" },
+              "blink": { "type": "boolean" },
+              "blink_period": { "type": "number", "exclusiveMinimum": 0 },
+              "oversample": { "type": "integer", "minimum": 1, "maximum": 6 },
+              "walk_cycle": { "type": "boolean" }
             }
           }
         ]

@@ -213,7 +213,15 @@
         "scale": 0.68,
         "pose": "walk",
         "expression": "neutral",
-        "shirt": "#7D9FC6"
+        "shirt": "#7D9FC6",
+        "animation": {
+          "preset": "walk_in",
+          "from_x": -200,
+          "start": 0.0,
+          "duration": 1.4,
+          "walk_speed": 1.8,
+          "walk_cycle": true
+        }
       }
     ],
     "props": [
@@ -236,7 +244,12 @@
         "y": 150,
         "width": 200
       }
-    ]
+    ],
+    "animation": {
+      "enabled": true,
+      "blink": true,
+      "oversample": 2
+    }
   },
   {
     "id": "scene_06_mark",
@@ -446,7 +459,12 @@
         "scale": 0.58,
         "pose": "stand",
         "expression": "smile",
-        "shirt": "#6599D1"
+        "shirt": "#6599D1",
+        "animation": {
+          "preset": "pop_in",
+          "start": 0.15,
+          "duration": 0.55
+        }
       },
       {
         "x": 640,
@@ -454,7 +472,12 @@
         "scale": 0.58,
         "pose": "walk",
         "expression": "neutral",
-        "shirt": "#6599D1"
+        "shirt": "#6599D1",
+        "animation": {
+          "preset": "pop_in",
+          "start": 0.57,
+          "duration": 0.55
+        }
       },
       {
         "x": 890,
@@ -462,7 +485,12 @@
         "scale": 0.58,
         "pose": "stand",
         "expression": "smile",
-        "shirt": "#6599D1"
+        "shirt": "#6599D1",
+        "animation": {
+          "preset": "pop_in",
+          "start": 0.99,
+          "duration": 0.55
+        }
       }
     ],
     "props": [
@@ -472,7 +500,12 @@
         "y": 140,
         "width": 240
       }
-    ]
+    ],
+    "animation": {
+      "enabled": true,
+      "blink": true,
+      "oversample": 2
+    }
   },
   {
     "id": "scene_10_occasion",
@@ -589,7 +622,13 @@
         "scale": 0.7,
         "pose": "point",
         "expression": "smile",
-        "shirt": "#E4574F"
+        "shirt": "#E4574F",
+        "animation": {
+          "preset": "slide_in",
+          "from_x": -260,
+          "start": 0.0,
+          "duration": 0.85
+        }
       }
     ],
     "props": [
@@ -614,7 +653,12 @@
         "width": 200
       }
     ],
-    "background": "#EAF6FF"
+    "background": "#EAF6FF",
+    "animation": {
+      "enabled": true,
+      "blink": true,
+      "oversample": 2
+    }
   },
   {
     "id": "scene_13_cycle",

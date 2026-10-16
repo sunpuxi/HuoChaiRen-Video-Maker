@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import math
 from html import escape
-from typing import Any
+from typing import Any, Optional
+
+from .animate import character_state, scene_animation
 
 
 VIEW_WIDTH = 1280
@@ -162,8 +165,13 @@ def render_backdrop(scene: dict[str, Any], project: dict[str, Any], index: int =
     return "".join(layers)
 
 
-def _face(expression: str) -> str:
-    eyes = '<circle cx="-23" cy="-10" r="7"/><circle cx="23" cy="-10" r="7"/>'
+def _face(expression: str, blink: float = 0.0) -> str:
+    if blink > 0:
+        radius = max(0.0, 7 * (1 - blink))
+        eyes = (f'<ellipse cx="-23" cy="-10" rx="7" ry="{radius:.2f}"/>'
+                f'<ellipse cx="23" cy="-10" rx="7" ry="{radius:.2f}"/>')
+    else:
+        eyes = '<circle cx="-23" cy="-10" r="7"/><circle cx="23" cy="-10" r="7"/>'
     mouths = {
         "neutral": '<path d="M-19 27 Q0 35 19 27" fill="none" class="thin"/>',
         "smile": '<path d="M-24 20 Q0 51 24 20" fill="none" class="thin"/>',
@@ -200,7 +208,23 @@ def _limbs(pose: str) -> str:
     return poses.get(pose, poses["stand"])
 
 
-def character_svg(character: dict[str, Any]) -> str:
+def _walk_limbs(phase: float) -> str:
+    """Legs and arms mid-stride; two steps per full cycle."""
+    swing = 48 * math.sin(phase)
+    lift_left = max(0.0, -30 * math.cos(phase))
+    lift_right = max(0.0, 30 * math.cos(phase))
+    return (
+        f'<path d="M-43 178 L{-104 - 0.6 * swing:g} 272 M43 178 L{104 + 0.6 * swing:g} 272" fill="none" class="ink"/>'
+        f'<path d="M-24 326 L{-68 + swing:g} {438 - lift_left:g} M24 326 L{72 - swing:g} {438 - lift_right:g}" fill="none" class="ink"/>'
+    )
+
+
+def character_svg(
+    character: dict[str, Any],
+    time: Optional[float] = None,
+    settings: Optional[dict[str, Any]] = None,
+    order: int = 0,
+) -> str:
     x = _num(character.get("x"), 640)
     y = _num(character.get("y"), 220)
     scale = _num(character.get("scale"), 0.7)
@@ -210,6 +234,16 @@ def character_svg(character: dict[str, Any]) -> str:
     pose = str(character.get("pose", "stand"))
     expression = str(character.get("expression", "neutral"))
     clothing = str(character.get("clothing", "shirt"))
+    blink = 0.0
+    walk_phase: Optional[float] = None
+
+    if time is not None and settings is not None:
+        state = character_state(character, time, settings, order)
+        x, y, scale = state["x"], state["y"] + state["bob"], state["scale"]
+        pose = state["pose"]
+        blink = state["blink"]
+        if state["walking"]:
+            walk_phase = state["walk_phase"]
 
     torso = (
         '<path d="M-60 92 Q0 65 60 92 L82 302 Q0 340 -82 302 Z" '
@@ -224,9 +258,9 @@ def character_svg(character: dict[str, Any]) -> str:
     return f'''
       <g transform="translate({x:g} {y:g}) rotate({rotation:g}) scale({scale:g})">
         <circle cx="0" cy="0" r="86" fill="{skin}" class="ink"/>
-        {_face(expression)}
+        {_face(expression, blink)}
         {torso}
-        {_limbs(pose)}
+        {_walk_limbs(walk_phase) if walk_phase is not None else _limbs(pose)}
       </g>'''
 
 
@@ -321,6 +355,7 @@ def render_scene_svg(
     scene: dict[str, Any],
     project: dict[str, Any],
     index: int = 0,
+    time: Optional[float] = None,
 ) -> str:
     background = escape(str(scene.get("background", project.get("background", "#FFFDF7"))), quote=True)
     title = _text(scene.get("title", ""))
@@ -328,12 +363,19 @@ def render_scene_svg(
     caption = _text(scene.get("caption", scene.get("narration", "")))
     backdrop = render_backdrop(scene, project, index)
     backdrop_svg = f"\n      {backdrop}" if backdrop else ""
+    animation = scene_animation(scene) if time is not None else None
+    # Skipping an empty title keeps the animated layer free of text, which is
+    # what lets it rasterise without touching the system fonts.
+    title_svg = f'\n      <text x="640" y="92" text-anchor="middle" class="title">{title}</text>' if title else ""
 
     connections = []
     for connection in scene.get("connections", []):
         connections.append(_arrow(connection))
     props = [PROP_RENDERERS[item["type"]](item) for item in scene.get("props", [])]
-    characters = [character_svg(item) for item in scene.get("characters", [])]
+    characters = [
+        character_svg(item, time, animation, order)
+        for order, item in enumerate(scene.get("characters", []))
+    ]
 
     caption_svg = ""
     if caption:
@@ -355,8 +397,7 @@ def render_scene_svg(
           .small-label {{ font-family:'PingFang SC','Hiragino Sans GB','Noto Sans CJK SC',sans-serif; font-size:29px; font-weight:800; fill:{INK}; }}
           .caption {{ font-family:'PingFang SC','Hiragino Sans GB','Noto Sans CJK SC',sans-serif; font-size:31px; font-weight:700; fill:white; }}
         </style>
-      </defs>
-      <text x="640" y="92" text-anchor="middle" class="title">{title}</text>
+      </defs>{title_svg}
       {''.join(connections)}
       {''.join(props)}
       {''.join(characters)}

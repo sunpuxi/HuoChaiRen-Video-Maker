@@ -13,6 +13,7 @@
 - 4× SVG 超采样、偶数像素裁切与缓入缓出，避免细线推镜抖动
 - 镜头时长对齐帧网格，短视频不会因不足一帧的舍入而漂移
 - 可选极简背景层：同色系背景纸片、地面线、角色投影与标题下划线，摆位逐镜轮换
+- 可选逐帧动画：角色入场、走路循环、眨眼；动画镜头可继续叠加推拉运镜
 - macOS 本地中文 TTS、DashScope Qwen3-TTS API，或使用预生成音频
 - 短句级配音：每个镜头可拆成多个独立配音和字幕片段
 - 自动生成 SRT、ASS，并将带样式字幕烧录到发布视频
@@ -199,7 +200,39 @@ cp -R projects/clothing projects/my-video
 
 背景可以逐镜换色来形成节奏：相邻镜头使用不同底色（例如 `#FFFDF7`、`#EAF6FF`、`#F6EFE2`、`#E9F4DD`），把 `#F6B95C`、`#CFEBC3` 这类饱和度较高的颜色留给需要强调的镜头。
 
+## 逐帧动画（可选）
+
+默认关闭。给场景加 `animation` 后，该镜头不再用单张图片，而是**逐帧用代码画出来**：角色可以走进画面、原地走路、眨眼。
+
+```json
+{
+  "id": "scene_05",
+  "title": "第二层皮肤",
+  "animation": { "enabled": true, "blink": true, "oversample": 2 },
+  "characters": [
+    {
+      "x": 640, "y": 255, "scale": 0.68, "pose": "walk", "shirt": "#7D9FC6",
+      "animation": { "preset": "walk_in", "from_x": -200, "duration": 1.4,
+                     "walk_speed": 1.8, "walk_cycle": true }
+    }
+  ]
+}
+```
+
+角色入场预设：
+
+| preset | 效果 |
+|---|---|
+| `walk_in` | 从 `from_x` 走到自己的 `x`，期间腿臂摆动；`walk_cycle` 为真时到位后继续原地走 |
+| `slide_in` | 从 `from_x` 平滑滑入，不摆腿 |
+| `pop_in` | 原地从 0 缩放弹出（带回弹缓动） |
+| `none` | 不动（默认） |
+
+- 角色级：`preset`、`start`、`duration`、`from_x`、`walk_speed`、`walk_cycle`、`blink`
+- 场景级：`enabled`、`blink`（默认开）、`blink_period`（默认 3.1 秒）、`walk_cycle`（默认开）、`oversample`（默认 2）
+
 实现要点：画面被拆成**静态层**（背景、背景纸片、标题、地面线、带文字的 node/bubble 道具）和**动画层**（角色与纯矢量道具）。静态层每镜只渲一次；动画层逐帧渲成透明 PNG，且不含任何文字，所以能跳过系统字体扫描——这正是逐帧渲染从 544 ms/帧降到约 60 ms/帧的原因。`oversample` 只作用于动画镜头，静止镜头仍用 `project.motion_oversample`（默认 4×）。没有 `animation` 的场景走原来的单图路径，不产生额外开销。
+
 ## 分段配音与字幕
 
 需要让字幕跟随配音短句切换时，在场景中增加 `narration_segments`。每一段会独立生成并缓存配音，程序根据音频真实长度生成字幕时间轴：
