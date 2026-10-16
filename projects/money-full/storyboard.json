@@ -1,0 +1,1424 @@
+[
+  {
+    "id": "s01_hook",
+    "narration": "钱，大概是人类最成功的一项发明。它让素不相识的人，也能放心地合作。",
+    "background": "#FFFDF7",
+    "camera": "zoom_in",
+    "title": "一个很怪的矛盾",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "confused"
+      }
+    ]
+  },
+  {
+    "id": "s02_purpose",
+    "narration": "说到底，钱本来只做一件事：让交换变得方便一点、更快一点、也更省事一点。",
+    "background": "#EAF6FF",
+    "camera": "static",
+    "title": "它本来只做一件事",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "smile"
+      }
+    ]
+  },
+  {
+    "id": "s02b_oldest",
+    "title": "它其实很年轻",
+    "narration": "但钱并不是从来就有的。它出现的时间，比人类历史短得多。",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "neutral"
+      }
+    ],
+    "background": "#F6EFE2"
+  },
+  {
+    "id": "s03_paradox",
+    "narration": "可奇怪的地方就在这里：钱越普及，我们反而越觉得自己缺钱。这说不通。",
+    "background": "#E9F4DD",
+    "camera": "pan_right",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "worried"
+      }
+    ]
+  },
+  {
+    "id": "s04_morning",
+    "narration": "我早上睁眼，第一件事不是起床，而是先看一眼余额，算算今天还能花多少。",
+    "background": "#F3E3C3",
+    "camera": "zoom_out",
+    "title": "我早上睁眼",
+    "props": [
+      {
+        "type": "bubble",
+        "x": 1015,
+        "y": 245,
+        "width": 240,
+        "height": 122,
+        "text": "余额"
+      }
+    ],
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "look_down",
+        "expression": "neutral"
+      }
+    ]
+  },
+  {
+    "id": "s05_coffee",
+    "narration": "买一杯咖啡，也要在心里算一遍：这个价格，到底值不值得。",
+    "background": "#FFFDF7",
+    "camera": "zoom_in",
+    "title": "买杯咖啡",
+    "props": [
+      {
+        "type": "bubble",
+        "x": 1010,
+        "y": 250,
+        "width": 250,
+        "height": 126,
+        "text": "值不值"
+      }
+    ],
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "think",
+        "expression": "confused"
+      }
+    ]
+  },
+  {
+    "id": "s06_salary",
+    "narration": "工资到账，开心不到两天，房租、水电、账单，就已经排好队等着了。",
+    "background": "#EAF6FF",
+    "camera": "zoom_in",
+    "title": "工资到账",
+    "props": [
+      {
+        "type": "node",
+        "x": 1010,
+        "y": 250,
+        "radius": 72,
+        "text": "房租"
+      },
+      {
+        "type": "node",
+        "x": 1190,
+        "y": 320,
+        "radius": 66,
+        "text": "账单"
+      }
+    ],
+    "characters": [
+      {
+        "x": 200,
+        "y": 270,
+        "scale": 0.62,
+        "pose": "stand",
+        "expression": "sad"
+      }
+    ]
+  },
+  {
+    "id": "s07_question",
+    "narration": "钱明明让交换更容易，为什么我们反而更不安心？这件事，得从头讲起。",
+    "background": "#F6EFE2",
+    "camera": "static",
+    "title": "一个真正的问题",
+    "props": [
+      {
+        "type": "star",
+        "x": 230,
+        "y": 205,
+        "scale": 0.8
+      }
+    ],
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "think",
+        "expression": "confused"
+      }
+    ]
+  },
+  {
+    "id": "s08_before",
+    "narration": "在钱出现之前，人们做买卖靠的是以物易物：拿东西，直接换东西。",
+    "background": "#E9F4DD",
+    "camera": "zoom_in",
+    "title": "在没有钱的时代",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "neutral"
+      }
+    ]
+  },
+  {
+    "id": "s09_sheep_rice",
+    "narration": "我有一只羊，你有一袋米，我们俩人商量好了，直接换就行。",
+    "background": "#F3E3C3",
+    "camera": "pan_right",
+    "title": "我有羊，你有米",
+    "props": [
+      {
+        "type": "icon",
+        "name": "sheep",
+        "x": 470,
+        "y": 470,
+        "size": 150
+      },
+      {
+        "type": "exchange",
+        "x1": 570,
+        "y1": 500,
+        "x2": 800,
+        "y2": 500,
+        "width": 15
+      },
+      {
+        "type": "icon",
+        "name": "rice",
+        "x": 900,
+        "y": 470,
+        "size": 150
+      }
+    ],
+    "characters": [
+      {
+        "x": 200,
+        "y": 270,
+        "scale": 0.62,
+        "pose": "point",
+        "expression": "neutral"
+      }
+    ]
+  },
+  {
+    "id": "s09b_three",
+    "title": "三个人就凑不齐了",
+    "narration": "可如果是三个人、三样东西呢？凑齐的难度会成倍上升。",
+    "camera": "zoom_out",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "think",
+        "expression": "confused"
+      }
+    ],
+    "background": "#FFFDF7"
+  },
+  {
+    "id": "s10_fish_shoes",
+    "narration": "我不爱吃鱼，但我需要一双鞋；你正好有鞋，也愿意吃鱼，就能换。",
+    "background": "#EAF6FF",
+    "camera": "zoom_in",
+    "title": "我不想吃鱼",
+    "props": [
+      {
+        "type": "icon",
+        "name": "fish",
+        "x": 470,
+        "y": 470,
+        "size": 150
+      },
+      {
+        "type": "exchange",
+        "x1": 570,
+        "y1": 500,
+        "x2": 800,
+        "y2": 500,
+        "width": 15
+      },
+      {
+        "type": "icon",
+        "name": "shoes",
+        "x": 900,
+        "y": 470,
+        "size": 150
+      }
+    ],
+    "characters": [
+      {
+        "x": 200,
+        "y": 270,
+        "scale": 0.62,
+        "pose": "point",
+        "expression": "smile"
+      }
+    ]
+  },
+  {
+    "id": "s11_premise",
+    "narration": "以物易物听上去很简单，可它藏着一个极其苛刻的前提。",
+    "background": "#F6EFE2",
+    "camera": "zoom_in",
+    "title": "但它有个前提",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "think",
+        "expression": "neutral"
+      }
+    ]
+  },
+  {
+    "id": "s12_two",
+    "narration": "你必须同时满足两个条件，缺一个，这笔交易就做不成。",
+    "background": "#E9F4DD",
+    "camera": "static",
+    "title": "必须同时满足两件事",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "think",
+        "expression": "confused"
+      }
+    ]
+  },
+  {
+    "id": "s13_first",
+    "narration": "第一，对方刚好需要你手里的东西，而且是现在就需要。",
+    "background": "#F3E3C3",
+    "camera": "zoom_in",
+    "title": "条件一",
+    "props": [
+      {
+        "type": "node",
+        "x": 1020,
+        "y": 260,
+        "radius": 86,
+        "text": "需要你的羊"
+      }
+    ],
+    "characters": [
+      {
+        "x": 200,
+        "y": 270,
+        "scale": 0.62,
+        "pose": "point",
+        "expression": "neutral"
+      }
+    ]
+  },
+  {
+    "id": "s14_second",
+    "narration": "第二，对方手里刚好有你要的东西，并且愿意拿出来。",
+    "background": "#FFFDF7",
+    "camera": "pan_right",
+    "title": "条件二",
+    "props": [
+      {
+        "type": "node",
+        "x": 1020,
+        "y": 260,
+        "radius": 86,
+        "text": "有你要的米"
+      }
+    ],
+    "characters": [
+      {
+        "x": 200,
+        "y": 270,
+        "scale": 0.62,
+        "pose": "point",
+        "expression": "confused"
+      }
+    ]
+  },
+  {
+    "id": "s15_name",
+    "narration": "经济学家给这件事起了个名字，叫需求的双重巧合。",
+    "background": "#EAF6FF",
+    "camera": "zoom_out",
+    "title": "这叫双重巧合",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "neutral"
+      }
+    ]
+  },
+  {
+    "id": "s15b_price",
+    "title": "还有价格问题",
+    "narration": "就算巧合真的发生了，价格也没法谈。一只羊，到底值几袋米？",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "think",
+        "expression": "confused"
+      }
+    ],
+    "background": "#F6EFE2"
+  },
+  {
+    "id": "s16_rare",
+    "narration": "而巧合，是很少发生的。它需要运气，而且不能讨价还价。",
+    "background": "#E9F4DD",
+    "camera": "zoom_in",
+    "title": "而巧合很少发生",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "worried"
+      }
+    ]
+  },
+  {
+    "id": "s16b_haggle",
+    "title": "每次都要重新谈",
+    "narration": "每一笔交易都要从头讨价还价，因为没有一把统一的尺子。",
+    "camera": "static",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "worried"
+      }
+    ],
+    "background": "#F3E3C3"
+  },
+  {
+    "id": "s17_stuck",
+    "narration": "你想拿鱼换鞋，可对方根本不吃鱼。这笔交易，就停在这里。",
+    "background": "#FFFDF7",
+    "camera": "zoom_in",
+    "title": "交易卡住了",
+    "props": [
+      {
+        "type": "icon",
+        "name": "fish",
+        "x": 470,
+        "y": 480,
+        "size": 140
+      },
+      {
+        "type": "cross",
+        "x": 640,
+        "y": 490,
+        "size": 120,
+        "width": 28
+      },
+      {
+        "type": "icon",
+        "name": "shoes",
+        "x": 810,
+        "y": 480,
+        "size": 140
+      }
+    ],
+    "characters": [
+      {
+        "x": 200,
+        "y": 270,
+        "scale": 0.62,
+        "pose": "look_down",
+        "expression": "worried"
+      }
+    ]
+  },
+  {
+    "id": "s18_dead",
+    "narration": "不是你不够努力，是这套方式本身就走不通。",
+    "background": "#EAF6FF",
+    "camera": "pan_right",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "sad"
+      }
+    ]
+  },
+  {
+    "id": "s19_second_prob",
+    "narration": "就算双方都愿意，还有第二个更难解决的问题在后面。",
+    "background": "#F6EFE2",
+    "camera": "zoom_out",
+    "title": "还有第二个问题",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "confused"
+      }
+    ]
+  },
+  {
+    "id": "s20_rot",
+    "narration": "羊会变老，鱼会发臭，米会生虫。它们都留不住。",
+    "background": "#E9F4DD",
+    "camera": "zoom_in",
+    "title": "东西会坏",
+    "props": [
+      {
+        "type": "icon",
+        "name": "fish",
+        "x": 980,
+        "y": 470,
+        "size": 130
+      }
+    ],
+    "characters": [
+      {
+        "x": 200,
+        "y": 270,
+        "scale": 0.62,
+        "pose": "stand",
+        "expression": "worried"
+      }
+    ]
+  },
+  {
+    "id": "s21_cant_keep",
+    "narration": "你没办法把今天的劳动，原封不动地存到明年再用。",
+    "background": "#F3E3C3",
+    "camera": "zoom_in",
+    "title": "财富留不住",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "look_down",
+        "expression": "sad"
+      }
+    ]
+  },
+  {
+    "id": "s22_must",
+    "narration": "所以人们必须找到一种新的东西，来解决这两个难题。",
+    "background": "#FFFDF7",
+    "camera": "static",
+    "title": "所以必须改变",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "neutral"
+      }
+    ]
+  },
+  {
+    "id": "s23_anyone",
+    "narration": "他们要的是一种谁都肯收的东西。不问原因，收下就行。",
+    "background": "#EAF6FF",
+    "camera": "zoom_in",
+    "title": "谁都肯收的东西",
+    "props": [
+      {
+        "type": "node",
+        "x": 230,
+        "y": 250,
+        "radius": 76,
+        "text": "贝壳"
+      },
+      {
+        "type": "node",
+        "x": 1050,
+        "y": 250,
+        "radius": 76,
+        "text": "金属"
+      }
+    ],
+    "characters": [
+      {
+        "x": 200,
+        "y": 270,
+        "scale": 0.62,
+        "pose": "point",
+        "expression": "neutral"
+      }
+    ]
+  },
+  {
+    "id": "s23b_iou",
+    "title": "钱其实是一张欠条",
+    "narration": "说到底，钱最早就是一张欠条，记着别人欠你多少东西。",
+    "camera": "pan_right",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "point",
+        "expression": "neutral"
+      }
+    ],
+    "background": "#F6EFE2"
+  },
+  {
+    "id": "s24_earliest",
+    "narration": "最早被选中的，是贝壳、盐、布，甚至还有牲畜。",
+    "background": "#E9F4DD",
+    "camera": "zoom_out",
+    "title": "最早是这些",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "neutral"
+      }
+    ]
+  },
+  {
+    "id": "s24b_trust",
+    "title": "前提是大家都信",
+    "narration": "它成立的前提只有一个：所有人都相信，别人也会收下它。",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "neutral"
+      }
+    ],
+    "background": "#F3E3C3"
+  },
+  {
+    "id": "s25_metals",
+    "narration": "后来慢慢地，大家固定在了金和银上，因为它们最省事。",
+    "background": "#FFFDF7",
+    "camera": "zoom_in",
+    "title": "后来固定在金银",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "smile"
+      }
+    ]
+  },
+  {
+    "id": "s26_why",
+    "narration": "金银稀少、耐用、能分割，体积又小，方便随身携带。",
+    "background": "#EAF6FF",
+    "camera": "static",
+    "title": "为什么是它们",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "point",
+        "expression": "smile"
+      }
+    ]
+  },
+  {
+    "id": "s27_three",
+    "narration": "钱这个东西，一次解决了三个问题。它的力量就在这里。",
+    "background": "#F6EFE2",
+    "camera": "zoom_in",
+    "title": "钱解决了三件事",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "arms_up",
+        "expression": "smile"
+      }
+    ]
+  },
+  {
+    "id": "s27b_pass",
+    "title": "它是一张通行证",
+    "narration": "所以钱更像一张通行证，而不是什么天生值钱的东西。",
+    "camera": "pan_right",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "smile"
+      }
+    ],
+    "background": "#E9F4DD"
+  },
+  {
+    "id": "s28_exchange",
+    "narration": "第一是交换。你不用再傻等那个几乎不会出现的双重巧合。",
+    "background": "#F3E3C3",
+    "camera": "zoom_out",
+    "title": "第一件：交换",
+    "props": [
+      {
+        "type": "arrow",
+        "x1": 900,
+        "y1": 300,
+        "x2": 1120,
+        "y2": 300,
+        "color": "#45A95A"
+      }
+    ],
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "point",
+        "expression": "neutral"
+      }
+    ]
+  },
+  {
+    "id": "s29_store",
+    "narration": "第二是储存。你可以把今天的劳动，留到明年再花。",
+    "background": "#FFFDF7",
+    "camera": "zoom_in",
+    "title": "第二件：储存",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "neutral"
+      }
+    ]
+  },
+  {
+    "id": "s30_measure",
+    "narration": "第三是计价。所有东西第一次有了同一把尺子，可以比较了。",
+    "background": "#EAF6FF",
+    "camera": "zoom_in",
+    "title": "第三件：计价",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "smile"
+      }
+    ]
+  },
+  {
+    "id": "s31_chain",
+    "narration": "分工、贸易、城市、信用，都是从这里一点点长出来的。",
+    "background": "#F6EFE2",
+    "camera": "static",
+    "title": "一场连锁反应",
+    "props": [
+      {
+        "type": "star",
+        "x": 240,
+        "y": 200,
+        "scale": 0.9
+      }
+    ],
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "arms_up",
+        "expression": "smile"
+      }
+    ]
+  },
+  {
+    "id": "s31b_not_free",
+    "title": "代价在后面",
+    "narration": "只是这些好处，从来不是免费的。代价要慢慢才会显出来。",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "worried"
+      }
+    ],
+    "background": "#E9F4DD"
+  },
+  {
+    "id": "s32_success",
+    "narration": "所以在方便交换这件事上，钱做得非常成功，几乎无可替代。",
+    "background": "#F3E3C3",
+    "camera": "pan_right",
+    "title": "钱确实成功了",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "smile"
+      }
+    ]
+  },
+  {
+    "id": "s32b_summary",
+    "title": "一句话总结",
+    "narration": "一句话总结：钱把「找对人」这件难事，换成了「找对价格」。",
+    "camera": "zoom_out",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "point",
+        "expression": "smile"
+      }
+    ],
+    "background": "#FFFDF7"
+  },
+  {
+    "id": "s33_but",
+    "narration": "但同一件工具，在解决旧问题的同时，也带来了新的麻烦。",
+    "background": "#EAF6FF",
+    "camera": "zoom_in",
+    "title": "但它也带来新麻烦",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "worried"
+      }
+    ]
+  },
+  {
+    "id": "s34_light",
+    "narration": "第一，钱本身会变轻。它买到的东西，会一年比一年少。",
+    "background": "#F6EFE2",
+    "camera": "zoom_in",
+    "title": "第一件：钱会变轻",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "surprised"
+      }
+    ]
+  },
+  {
+    "id": "s34b_feel",
+    "title": "通胀是什么感觉",
+    "narration": "通货膨胀听着抽象，感受却很具体：钱还是那些钱，能买的少了。",
+    "camera": "static",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "look_down",
+        "expression": "worried"
+      }
+    ],
+    "background": "#E9F4DD"
+  },
+  {
+    "id": "s35_hundred",
+    "narration": "同样一百块，十年前能买一整车东西，今天可能只够一顿饭。",
+    "background": "#F3E3C3",
+    "camera": "zoom_in",
+    "title": "同样一百块",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "look_down",
+        "expression": "sad"
+      }
+    ]
+  },
+  {
+    "id": "s36_race",
+    "narration": "你的工资在涨，可物价往往涨得更快，你只是在原地跑。",
+    "background": "#FFFDF7",
+    "camera": "pan_right",
+    "title": "一场赛跑",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "sad"
+      }
+    ]
+  },
+  {
+    "id": "s36b_savings",
+    "title": "存着也在缩水",
+    "narration": "更难受的是，你把钱老老实实存着不动，它也在悄悄变少。",
+    "camera": "zoom_out",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "sad"
+      }
+    ],
+    "background": "#EAF6FF"
+  },
+  {
+    "id": "s37_comparable",
+    "narration": "第二，钱让所有东西都变得可以比较，包括你自己。",
+    "background": "#F6EFE2",
+    "camera": "zoom_in",
+    "title": "第二件：一切可比",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "neutral"
+      }
+    ]
+  },
+  {
+    "id": "s38_raise",
+    "narration": "你涨了薪，本来挺开心，觉得今年总算没白干。",
+    "background": "#E9F4DD",
+    "camera": "zoom_in",
+    "title": "你涨薪了",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "smile"
+      }
+    ]
+  },
+  {
+    "id": "s38b_reunion",
+    "title": "同学聚会",
+    "narration": "同学聚会上本来聊得挺好，直到有人随口提了一句年终奖。",
+    "camera": "static",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "confused"
+      }
+    ],
+    "background": "#F3E3C3"
+  },
+  {
+    "id": "s39_colleague",
+    "narration": "结果你听说，隔壁同事涨得比你还多，一下就不对味了。",
+    "background": "#FFFDF7",
+    "camera": "zoom_in",
+    "title": "但同事涨得更多",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "surprised"
+      }
+    ]
+  },
+  {
+    "id": "s40_gone",
+    "narration": "那份开心没有消失，它只是被比较吃掉了。",
+    "background": "#EAF6FF",
+    "camera": "pan_right",
+    "title": "开心瞬间消失",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "sad"
+      }
+    ]
+  },
+  {
+    "id": "s41_relative",
+    "narration": "这叫相对收入效应：你在意的不是多少，而是比谁多。",
+    "background": "#F6EFE2",
+    "camera": "zoom_out",
+    "title": "相对收入效应",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "point",
+        "expression": "neutral"
+      }
+    ]
+  },
+  {
+    "id": "s41b_ratchet",
+    "title": "参照系只会往上走",
+    "narration": "参照系一旦上移，就不会自己降回来。这才是最麻烦的地方。",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "worried"
+      }
+    ],
+    "background": "#E9F4DD"
+  },
+  {
+    "id": "s42_algorithm",
+    "narration": "第三，你的参照系被算法放大了，而且放大了几百倍。",
+    "background": "#F3E3C3",
+    "camera": "zoom_in",
+    "title": "第三件：算法",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "confused"
+      }
+    ]
+  },
+  {
+    "id": "s43_phone",
+    "narration": "手机里刷到的，永远是别人生活中最好的那一面。",
+    "background": "#FFFDF7",
+    "camera": "static",
+    "title": "手机里全是别人",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "look_down",
+        "expression": "worried"
+      }
+    ]
+  },
+  {
+    "id": "s43b_ads",
+    "title": "广告在教你需要什么",
+    "narration": "广告的工作，就是不断提醒你：你还缺一样东西。",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "point",
+        "expression": "neutral"
+      }
+    ],
+    "background": "#EAF6FF"
+  },
+  {
+    "id": "s44_treadmill",
+    "narration": "你拼命往前跑，却发现脚下的跑步机也在同步加速。",
+    "background": "#F6EFE2",
+    "camera": "pan_right",
+    "title": "跑步机",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "walk",
+        "expression": "confused"
+      }
+    ]
+  },
+  {
+    "id": "s45_must",
+    "narration": "第四，钱把「想要」慢慢变成了「必须」，而且不再回头。",
+    "background": "#E9F4DD",
+    "camera": "zoom_out",
+    "title": "第四件：想要变必须",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "worried"
+      }
+    ]
+  },
+  {
+    "id": "s45b_invented",
+    "title": "「必须」是被造出来的",
+    "narration": "今天很多「必须」，其实是几年前才第一次听说过的词。",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "confused"
+      }
+    ],
+    "background": "#F3E3C3"
+  },
+  {
+    "id": "s46_borrow",
+    "narration": "第五，你可以借未来的钱，先把东西拿到手。",
+    "background": "#FFFDF7",
+    "camera": "zoom_in",
+    "title": "第五件：可以借未来",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "think",
+        "expression": "confused"
+      }
+    ]
+  },
+  {
+    "id": "s46b_split",
+    "title": "分期的心理",
+    "narration": "分期付款把一笔大钱拆成很多笔小钱，痛感一下就消失了。",
+    "camera": "static",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "think",
+        "expression": "neutral"
+      }
+    ],
+    "background": "#EAF6FF"
+  },
+  {
+    "id": "s47_trade",
+    "narration": "于是今天的快乐，是用明天的自由换来的。",
+    "background": "#F6EFE2",
+    "camera": "zoom_in",
+    "title": "用明天换今天",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "look_down",
+        "expression": "sad"
+      }
+    ]
+  },
+  {
+    "id": "s47b_bill",
+    "title": "账单只是晚点到",
+    "narration": "可账单不会消失，它只是晚一点，才来找你。",
+    "camera": "pan_right",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "look_down",
+        "expression": "sad"
+      }
+    ],
+    "background": "#E9F4DD"
+  },
+  {
+    "id": "s48_loop",
+    "narration": "债务让你更需要钱；更需要钱，你就更不敢停下来。",
+    "background": "#F3E3C3",
+    "camera": "zoom_out",
+    "title": "一个循环",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "worried"
+      }
+    ]
+  },
+  {
+    "id": "s49_what",
+    "narration": "所以「越来越缺钱」，缺的到底是什么？我们分开来看。",
+    "background": "#FFFDF7",
+    "camera": "zoom_in",
+    "title": "缺的到底是什么",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "think",
+        "expression": "confused"
+      }
+    ]
+  },
+  {
+    "id": "s49b_split_q",
+    "title": "把问题拆开",
+    "narration": "把两个问题分开问：我有多少钱，和我需要多少钱。",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "point",
+        "expression": "neutral"
+      }
+    ],
+    "background": "#EAF6FF"
+  },
+  {
+    "id": "s50_absolute",
+    "narration": "如果只看绝对水平，我们比任何一个古人都富有得多。",
+    "background": "#F6EFE2",
+    "camera": "static",
+    "title": "绝对水平",
+    "props": [
+      {
+        "type": "node",
+        "x": 240,
+        "y": 250,
+        "radius": 76,
+        "text": "更富"
+      },
+      {
+        "type": "node",
+        "x": 1040,
+        "y": 250,
+        "radius": 76,
+        "text": "缺钱"
+      }
+    ],
+    "characters": [
+      {
+        "x": 200,
+        "y": 270,
+        "scale": 0.62,
+        "pose": "point",
+        "expression": "neutral"
+      }
+    ]
+  },
+  {
+    "id": "s51_not_money",
+    "narration": "所以缺的，从来不是绝对意义上的钱。",
+    "background": "#E9F4DD",
+    "camera": "zoom_in",
+    "title": "不是绝对的钱",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "neutral"
+      }
+    ]
+  },
+  {
+    "id": "s52_standard",
+    "narration": "缺的，是那个「够」的标准——而它一直在往上走。",
+    "background": "#F3E3C3",
+    "camera": "pan_right",
+    "title": "是「够」的标准",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "confused"
+      }
+    ]
+  },
+  {
+    "id": "s53_others",
+    "narration": "更麻烦的是，这个标准常常不是你定的，是别人替你定的。",
+    "background": "#FFFDF7",
+    "camera": "zoom_out",
+    "title": "而这个标准是别人定的",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "worried"
+      }
+    ]
+  },
+  {
+    "id": "s53b_never",
+    "title": "永远到不了的标准",
+    "narration": "如果这个标准一直是别人定的，那就永远不会有达标的那天。",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "worried"
+      }
+    ],
+    "background": "#EAF6FF"
+  },
+  {
+    "id": "s54_cant",
+    "narration": "钱能解决交换，却解决不了安心。这两件事，不是一回事。",
+    "background": "#F6EFE2",
+    "camera": "zoom_in",
+    "title": "钱能做什么",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "sad"
+      }
+    ]
+  },
+  {
+    "id": "s55_ruler",
+    "narration": "它是一把尺子，用来量东西；它不是一个答案。",
+    "background": "#E9F4DD",
+    "camera": "static",
+    "title": "它是一把尺子",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "neutral"
+      }
+    ]
+  },
+  {
+    "id": "s55b_mirror",
+    "title": "钱只是一面镜子",
+    "narration": "钱本身没有错。它更像一面镜子，照出我们到底想要什么。",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "neutral"
+      }
+    ],
+    "background": "#F3E3C3"
+  },
+  {
+    "id": "s56_real",
+    "narration": "所以真正的问题，也许不是「我怎么才能更有钱」。",
+    "background": "#FFFDF7",
+    "camera": "pan_right",
+    "title": "也许真正的问题",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "think",
+        "expression": "neutral"
+      }
+    ]
+  },
+  {
+    "id": "s57_enough",
+    "narration": "而是——我到底需要多少，才算够。",
+    "background": "#EAF6FF",
+    "camera": "zoom_out",
+    "title": "而是",
+    "characters": [
+      {
+        "x": 640,
+        "y": 240,
+        "scale": 0.8,
+        "pose": "stand",
+        "expression": "neutral"
+      }
+    ]
+  }
+]

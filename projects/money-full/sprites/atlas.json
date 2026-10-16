@@ -1,0 +1,141 @@
+{
+  "character": "a tall thin young Chinese man with a long narrow face, thick black hair swept up and to the side, thick black eyebrows, small eyes, light grey short-sleeve t-shirt, black slim trousers, grey canvas sneakers with white soles",
+  "model": "image-01",
+  "size": [
+    1024,
+    1536
+  ],
+  "background": "#00FF00 chroma key",
+  "pipeline": "MiniMax image-01 (one state per image, 2 variants, best picked) -> scripts/sprite_key.sh (RGB greenness) -> scripts/sprite_crop.py",
+  "sprites": {
+    "arms_up_smile": {
+      "file": "arms_up_smile.png",
+      "sha256": "24c2b2d7c4877c23",
+      "bytes": 396445
+    },
+    "arms_up_surprised": {
+      "file": "arms_up_surprised.png",
+      "sha256": "37cf998a2b13456e",
+      "bytes": 578403
+    },
+    "look_down_neutral": {
+      "file": "look_down_neutral.png",
+      "sha256": "89b4a20b85c7d68c",
+      "bytes": 365652
+    },
+    "look_down_sad": {
+      "file": "look_down_sad.png",
+      "sha256": "97f834e8a676cbc3",
+      "bytes": 384743
+    },
+    "look_down_worried": {
+      "file": "look_down_worried.png",
+      "sha256": "a6dbe19f14c8a522",
+      "bytes": 248076
+    },
+    "point_confused": {
+      "file": "point_confused.png",
+      "sha256": "4277cc2ff48861cc",
+      "bytes": 681678
+    },
+    "point_neutral": {
+      "file": "point_neutral.png",
+      "sha256": "7e09d73cc67c2bdd",
+      "bytes": 304493
+    },
+    "point_smile": {
+      "file": "point_smile.png",
+      "sha256": "74ff413fe7a5f6a0",
+      "bytes": 568054
+    },
+    "stand_confused": {
+      "file": "stand_confused.png",
+      "sha256": "530b400b36045fec",
+      "bytes": 568556
+    },
+    "stand_neutral": {
+      "file": "stand_neutral.png",
+      "sha256": "df98deaca796e0f7",
+      "bytes": 271413
+    },
+    "stand_sad": {
+      "file": "stand_sad.png",
+      "sha256": "0fdd33d3d6baa152",
+      "bytes": 417971
+    },
+    "stand_smile": {
+      "file": "stand_smile.png",
+      "sha256": "cd1f77ffc15dfb49",
+      "bytes": 477235
+    },
+    "stand_surprised": {
+      "file": "stand_surprised.png",
+      "sha256": "aa0e3ce87203f46f",
+      "bytes": 432537
+    },
+    "stand_worried": {
+      "file": "stand_worried.png",
+      "sha256": "4f9c4eb9a9da0b21",
+      "bytes": 321146
+    },
+    "think_confused": {
+      "file": "think_confused.png",
+      "sha256": "2e90fe1ed6ed6171",
+      "bytes": 414595
+    },
+    "think_neutral": {
+      "file": "think_neutral.png",
+      "sha256": "74d1c6bdadb0caf6",
+      "bytes": 298800
+    },
+    "think_surprised": {
+      "file": "think_surprised.png",
+      "sha256": "fb8a19365be14f31",
+      "bytes": 325155
+    },
+    "walk_confused": {
+      "file": "walk_confused.png",
+      "sha256": "a30bd1b25aa8b77e",
+      "bytes": 435842
+    },
+    "walk_neutral": {
+      "file": "walk_neutral.png",
+      "sha256": "6a5e3aa0c21f5f49",
+      "bytes": 341917
+    },
+    "walk_smile": {
+      "file": "walk_smile.png",
+      "sha256": "cca60e7761703298",
+      "bytes": 379153
+    }
+  },
+  "selection": {
+    "arms_up_smile": 1,
+    "look_down_sad": 2,
+    "look_down_worried": 1,
+    "point_confused": 1,
+    "point_smile": 2,
+    "stand_confused": 1,
+    "stand_neutral": 1,
+    "stand_surprised": 1,
+    "stand_worried": 2,
+    "think_neutral": 1,
+    "think_surprised": 1,
+    "walk_confused": 2,
+    "walk_smile": 1,
+    "stand_smile": "orig",
+    "think_confused": "orig",
+    "arms_up_surprised": "v2",
+    "look_down_neutral": "orig",
+    "stand_sad": "v3",
+    "point_neutral": "v2",
+    "walk_neutral": "v2"
+  },
+  "normalisation": {
+    "default": 524,
+    "overrides": {
+      "arms_up_surprised": 696
+    },
+    "note": "精灵按不透明外框归一化。举手过头的姿势外框高于身体，arms_up_surprised 实测身体只占外框 75.3%，单独指定高度。"
+  }
+}
