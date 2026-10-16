@@ -132,7 +132,7 @@ def synthesize_dashscope_qwen3(
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
-            "User-Agent": "HuoChaiRen-Video-Maker/0.4",
+            "User-Agent": "StickMan-Video-Maker/0.4",
         },
         method="POST",
     )
@@ -160,6 +160,6 @@ def synthesize_dashscope_qwen3(
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise TTSError("DashScope returned an invalid audio URL")
 
-    download = Request(audio_url, headers={"User-Agent": "HuoChaiRen-Video-Maker/0.4"})
+    download = Request(audio_url, headers={"User-Agent": "StickMan-Video-Maker/0.4"})
     audio_bytes = _request(download, timeout=timeout, attempts=attempts)
     _write_atomic(output, audio_bytes)

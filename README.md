@@ -1,8 +1,8 @@
-# HuoChaiRen Video Maker
+# StickMan Video Maker
 
 一套以 JSON 分镜驱动的火柴人科普视频渲染工具。画面由 SVG 组件生成，`resvg` 负责稳定栅格化，FFmpeg 负责镜头运动、音频和视频封装。
 
-项目地址：[github.com/sunpuxi/HuoChaiRen-Video-Maker](https://github.com/sunpuxi/HuoChaiRen-Video-Maker)
+项目地址：[github.com/sunpuxi/StickMan-Video-Maker](https://github.com/sunpuxi/StickMan-Video-Maker)
 
 ## 功能
 
@@ -34,8 +34,8 @@
 ## 安装
 
 ```bash
-git clone https://github.com/sunpuxi/HuoChaiRen-Video-Maker.git
-cd HuoChaiRen-Video-Maker
+git clone https://github.com/sunpuxi/StickMan-Video-Maker.git
+cd StickMan-Video-Maker
 npm install
 ```
 
@@ -116,7 +116,7 @@ builds/clothing/preview/
 ## 项目结构
 
 ```text
-stickman-pipeline/
+StickMan-Video-Maker/
 ├── render.py
 ├── storyboard.schema.json
 ├── pipeline/
