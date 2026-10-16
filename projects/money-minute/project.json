@@ -1,6 +1,6 @@
 {
   "title": "为什么人类发明了钱，却反而越来越缺钱？",
-  "output_name": "money_one_minute_hand",
+  "output_name": "money_one_minute",
   "resolution": [
     1280,
     720
@@ -43,5 +43,5 @@
   "background_style": {
     "enabled": true
   },
-  "art_style": "hand"
+  "art_style": "line"
 }
