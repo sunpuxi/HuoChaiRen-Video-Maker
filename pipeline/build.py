@@ -14,6 +14,7 @@ from .animate import (
     has_animated_content,
     scene_animation,
     split_layers,
+    strip_background,
 )
 from .config import resolve_project
 from .media import (
@@ -405,11 +406,13 @@ def build_project(
                 for frame_index in range(frame_count):
                     frame_svg = frame_dir / f"frame_{frame_index:04d}.svg"
                     frame_svg.write_text(
-                        render_scene_svg(
-                            layer_scene,
-                            project,
-                            index=scene_index,
-                            time=frame_index / fps,
+                        strip_background(
+                            render_scene_svg(
+                                layer_scene,
+                                project,
+                                index=scene_index,
+                                time=frame_index / fps,
+                            )
                         ),
                         encoding="utf-8",
                     )

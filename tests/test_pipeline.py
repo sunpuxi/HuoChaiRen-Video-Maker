@@ -15,6 +15,7 @@ from pipeline.animate import (
     animation_signature,
     has_animated_content,
     split_layers,
+    strip_background,
 )
 from pipeline.config import resolve_project
 from pipeline.media import (
@@ -602,6 +603,16 @@ class AnimationTests(unittest.TestCase):
         self.assertNotIn("<text", start)         # animated layer can skip the font scan
         self.assertIn("translate(-200", start)
         self.assertNotEqual(start, later)        # the layer really animates
+
+    def test_animation_layer_has_no_opaque_background(self) -> None:
+        """The layer composites on top of the base, so it must stay transparent."""
+        base, layer = split_layers(self.SCENE, self.PROJECT)
+        base_svg = render_scene_svg(base, self.PROJECT, index=0)
+        layer_svg = strip_background(render_scene_svg(layer, self.PROJECT, index=0, time=0.5))
+        self.assertIn('<rect width="1280" height="720"', base_svg)      # base paints the scene
+        self.assertNotIn('<rect width="1280" height="720"', layer_svg)  # layer must not,
+        self.assertNotIn("<text", layer_svg)                            # or it hides the base
+        self.assertEqual(strip_background("<svg></svg>"), "<svg></svg>")
 
     def test_animated_scene_is_detected(self) -> None:
         self.assertTrue(has_animated_content(self.SCENE))

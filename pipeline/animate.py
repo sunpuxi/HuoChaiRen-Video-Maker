@@ -17,7 +17,25 @@ ENTER_PRESETS = ("walk_in", "slide_in", "pop_in")
 
 # Bump whenever the frame generation changes shape (layer split, easing, limb
 # maths). It is part of the clip cache key, so stale clips cannot be reused.
-ANIMATION_VERSION = 2
+ANIMATION_VERSION = 3
+
+BACKGROUND_RECT = '<rect width="1280" height="720"'
+
+
+def strip_background(svg: str) -> str:
+    """Drop the opaque background rect so a layer composites with alpha.
+
+    The animated layer is drawn on top of the static base, so it must stay
+    transparent; otherwise it hides the title, the backdrop and every text prop
+    that lives on the base layer.
+    """
+    start = svg.find(BACKGROUND_RECT)
+    if start < 0:
+        return svg
+    end = svg.find("/>", start)
+    if end < 0:
+        return svg
+    return svg[:start] + svg[end + 2:]
 
 SCENE_DEFAULTS: dict[str, Any] = {
     "enabled": True,
