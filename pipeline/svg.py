@@ -4,6 +4,7 @@ import math
 from html import escape
 from typing import Any, Optional
 
+from . import handdraw, handprops
 from .animate import character_state, prop_state, scene_animation
 
 
@@ -64,8 +65,10 @@ def _contrast(first: str, second: str) -> float:
     return (high + 0.05) / (low + 0.05)
 
 
-def _paper_shape(kind: str, background: str) -> str:
+def _paper_shape(kind: str, background: str, art_style: str = "line") -> str:
     tint = _mix(background, INK, 0.065)
+    if art_style == "hand":
+        return handprops.paper_shape(kind, tint)
     if kind == "circle_top_right":
         return f'<circle cx="1220" cy="110" r="260" fill="{tint}"/>'
     if kind == "circle_bottom_left":
@@ -76,10 +79,12 @@ def _paper_shape(kind: str, background: str) -> str:
     return f'<circle cx="80" cy="96" r="235" fill="{tint}"/>'
 
 
-def _title_stroke(title: str, background: str) -> str:
+def _title_stroke(title: str, background: str, art_style: str = "line") -> str:
     width = min(300, 46 * len(title) + 40)
     # Accent yellow disappears on saturated backgrounds, so fall back to ink.
     colour = ACCENT if _contrast(ACCENT, background) >= 1.55 else _mix(background, INK, 0.30)
+    if art_style == "hand":
+        return handprops.title_stroke(640 - width / 2, 640 + width / 2, 126, colour)
     return (
         f'<path d="M{640 - width / 2:g} 126 Q640 116 {640 + width / 2:g} 126" fill="none" '
         f'stroke="{colour}" stroke-width="14" stroke-linecap="round"/>'
@@ -105,28 +110,43 @@ def _prop_bottom(prop: dict[str, Any]) -> float:
     return y
 
 
-def _ground_line(scene: dict[str, Any]) -> str:
+def _figure_metrics(item: dict[str, Any], project: dict[str, Any]) -> dict[str, float]:
+    """How far below a character's anchor its feet and shadow sit.
+
+    The hand-drawn figures have different proportions from the line figures, so
+    they need their own foot offset rather than a shared magic number.
+    """
+    return handdraw.metrics_for(handdraw.art_style_for(item, project))
+
+
+def _ground_line(scene: dict[str, Any], project: dict[str, Any],
+                 art_style: str = "line") -> str:
     feet = [
-        _num(item.get("y"), 220) + _num(item.get("scale"), 0.7) * 452
+        _num(item.get("y"), 220)
+        + _num(item.get("scale"), 0.7) * _figure_metrics(item, project)["foot"]
         for item in scene.get("characters", [])
     ]
     props = [_prop_bottom(item) for item in scene.get("props", [])]
     lowest = max([value + 22 for value in feet] + [value + 14 for value in props], default=596)
     y = int(max(560, min(608, lowest)))
+    if art_style == "hand":
+        return f'<g opacity="0.13">{handprops.ground_line(96, 1184, y, INK)}</g>'
     return (
         f'<path d="M96 {y} Q640 {y - 12} 1184 {y}" fill="none" stroke="{INK}" '
         f'stroke-width="10" stroke-linecap="round" opacity="0.13"/>'
     )
 
 
-def _character_shadows(scene: dict[str, Any]) -> str:
+def _character_shadows(scene: dict[str, Any], project: dict[str, Any]) -> str:
     parts = []
     for item in scene.get("characters", []):
         x, y = _num(item.get("x"), 640), _num(item.get("y"), 220)
         scale = _num(item.get("scale"), 0.7)
+        metrics = _figure_metrics(item, project)
         parts.append(
-            f'<ellipse cx="{x:g}" cy="{y + scale * 452:g}" rx="{scale * 96:g}" '
-            f'ry="{scale * 15:g}" fill="{INK}" opacity="0.08"/>'
+            f'<ellipse cx="{x:g}" cy="{y + scale * metrics["foot"]:g}" '
+            f'rx="{scale * metrics["shadow_rx"]:g}" '
+            f'ry="{scale * metrics["shadow_ry"]:g}" fill="{INK}" opacity="0.08"/>'
         )
     return "".join(parts)
 
@@ -149,19 +169,20 @@ def render_backdrop(scene: dict[str, Any], project: dict[str, Any], index: int =
     if not settings["enabled"]:
         return ""
     background = escape(str(scene.get("background", project.get("background", "#FFFDF7"))), quote=True)
+    art_style = handdraw.art_style_for({}, project)
     shape = str(settings["paper_shape"])
     if shape == "auto":
         shape = PAPER_SHAPES[index % len(PAPER_SHAPES)]
     layers = []
     if shape in PAPER_SHAPES:
-        layers.append(_paper_shape(shape, background))
+        layers.append(_paper_shape(shape, background, art_style))
     if settings["character_shadows"]:
-        layers.append(_character_shadows(scene))
+        layers.append(_character_shadows(scene, project))
     if settings["ground"]:
-        layers.append(_ground_line(scene))
+        layers.append(_ground_line(scene, project, art_style))
     title = str(scene.get("title", "")).strip()
     if settings["title_stroke"] and title:
-        layers.append(_title_stroke(title, background))
+        layers.append(_title_stroke(title, background, art_style))
     return "".join(layers)
 
 
@@ -224,7 +245,10 @@ def character_svg(
     time: Optional[float] = None,
     settings: Optional[dict[str, Any]] = None,
     order: int = 0,
+    art_style: str = "line",
 ) -> str:
+    if art_style == "hand":
+        return handdraw.character_svg(character, time, settings, order)
     x = _num(character.get("x"), 640)
     y = _num(character.get("y"), 220)
     scale = _num(character.get("scale"), 0.7)
@@ -463,6 +487,15 @@ def _exchange(prop: dict[str, Any]) -> str:
     )
 
 
+def render_prop(prop: dict[str, Any], project: dict[str, Any]) -> str:
+    """Draw a prop with the pen that matches the project's art style."""
+    if handdraw.art_style_for({}, project) == "hand":
+        renderer = handprops.PROP_RENDERERS.get(str(prop.get("type", "")))
+        if renderer is not None:
+            return renderer(prop)
+    return PROP_RENDERERS[prop["type"]](prop)
+
+
 PROP_RENDERERS = {
     "arrow": _arrow,
     "cross": _cross,
@@ -507,9 +540,10 @@ def render_scene_svg(
                 render_item = {**item, "_grow": state["grow"]}
                 if state["scale"] != 1.0:
                     render_item["scale"] = _num(item.get("scale"), 1.0) * state["scale"]
-        props.append(PROP_RENDERERS[render_item["type"]](render_item))
+        props.append(render_prop(render_item, project))
     characters = [
-        character_svg(item, time, animation, order)
+        character_svg(item, time, animation, order,
+                      art_style=handdraw.art_style_for(item, project))
         for order, item in enumerate(scene.get("characters", []))
     ]
 

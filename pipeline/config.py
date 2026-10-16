@@ -17,6 +17,13 @@ from .tts import (
 
 
 ALLOWED_POSES = {"stand", "look_down", "point", "arms_up", "think", "walk"}
+ALLOWED_ART_STYLES = {"line", "hand"}
+ALLOWED_HAIR = {"spikes", "bowl", "ring", "flat", "afro", "combover", "none"}
+ALLOWED_BROWS = {"worried", "angry", "raised", "flat", "unibrow"}
+ALLOWED_NOSES = {"hook", "potato", "pointy", "tiny"}
+ALLOWED_MOUTHS = {"flat", "grin", "squiggle", "open", "frown"}
+ALLOWED_OUTFITS = {"fur", "shirt", "tie", "overalls", "robe", "none"}
+ALLOWED_EARS = {"normal", "big", "none"}
 ALLOWED_EXPRESSIONS = {"neutral", "smile", "confused", "surprised", "sad", "angry"}
 ALLOWED_CAMERAS = {"static", "zoom_in", "zoom_out", "pan_left", "pan_right"}
 ALLOWED_PROPS = {"arrow", "cross", "bubble", "node", "mirror", "arc", "star", "icon", "exchange"}
@@ -344,6 +351,13 @@ def validate(project: dict[str, Any], scenes: Any, project_dir: Path) -> None:
 
     _backdrop(project.get("background_style"), "project.background_style", errors)
 
+    art_style = project.get("art_style")
+    if art_style is not None and art_style not in ALLOWED_ART_STYLES:
+        errors.append(
+            f"project.art_style is not supported: {art_style} "
+            f"(available: {', '.join(sorted(ALLOWED_ART_STYLES))})"
+        )
+
     voice = project.get("voice", {})
     if not isinstance(voice, dict):
         errors.append("project.voice must be an object")
@@ -428,10 +442,23 @@ def validate(project: dict[str, Any], scenes: Any, project_dir: Path) -> None:
             errors.append(f"{prefix}.camera is not supported: {camera}")
 
         for char_index, character in enumerate(scene.get("characters", [])):
+            char_prefix = f"{prefix}.characters[{char_index}]"
             if character.get("pose", "stand") not in ALLOWED_POSES:
-                errors.append(f"{prefix}.characters[{char_index}].pose is unsupported")
+                errors.append(f"{char_prefix}.pose is unsupported")
             if character.get("expression", "neutral") not in ALLOWED_EXPRESSIONS:
-                errors.append(f"{prefix}.characters[{char_index}].expression is unsupported")
+                errors.append(f"{char_prefix}.expression is unsupported")
+            for key, allowed in (
+                ("style", ALLOWED_ART_STYLES),
+                ("hair", ALLOWED_HAIR),
+                ("brow", ALLOWED_BROWS),
+                ("nose", ALLOWED_NOSES),
+                ("mouth", ALLOWED_MOUTHS),
+                ("outfit", ALLOWED_OUTFITS),
+                ("ears", ALLOWED_EARS),
+            ):
+                value = character.get(key)
+                if value is not None and value not in allowed:
+                    errors.append(f"{char_prefix}.{key} is not supported: {value}")
             _animation(
                 character.get("animation"),
                 f"{prefix}.characters[{char_index}].animation",

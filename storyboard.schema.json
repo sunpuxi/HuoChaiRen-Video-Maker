@@ -127,6 +127,79 @@
                 "hide"
               ]
             },
+            "style": {
+              "type": "string",
+              "enum": [
+                "line",
+                "hand"
+              ]
+            },
+            "hair": {
+              "type": "string",
+              "enum": [
+                "spikes",
+                "bowl",
+                "ring",
+                "flat",
+                "afro",
+                "combover",
+                "none"
+              ]
+            },
+            "brow": {
+              "type": "string",
+              "enum": [
+                "worried",
+                "angry",
+                "raised",
+                "flat",
+                "unibrow"
+              ]
+            },
+            "nose": {
+              "type": "string",
+              "enum": [
+                "hook",
+                "potato",
+                "pointy",
+                "tiny"
+              ]
+            },
+            "mouth": {
+              "type": "string",
+              "enum": [
+                "flat",
+                "grin",
+                "squiggle",
+                "open",
+                "frown"
+              ]
+            },
+            "outfit": {
+              "type": "string",
+              "enum": [
+                "fur",
+                "shirt",
+                "tie",
+                "overalls",
+                "robe",
+                "none"
+              ]
+            },
+            "ears": {
+              "type": "string",
+              "enum": [
+                "normal",
+                "big",
+                "none"
+              ]
+            },
+            "hair_colour": {
+              "type": "string"
+            },
+            "accent": {
+              "type": "string"
+            },
             "animation": {
               "oneOf": [
                 {
