@@ -23,6 +23,10 @@ MINIMAX_TEXT_LIMIT = 10_000
 # MiniMax reports business failures inside an HTTP 200 body via base_resp.
 # 1001 timeout / 1002 rate limit / 1039 TPM rate limit are worth another try.
 MINIMAX_RETRYABLE_STATUS_CODES = {1001, 1002, 1039}
+# 1002 is a per-minute rate limit and 1039 a per-minute token limit: both need
+# to wait out a window, not just back off a couple of seconds.
+MINIMAX_RATE_LIMIT_STATUS_CODES = {1002, 1039}
+MINIMAX_RATE_LIMIT_BACKOFF = 20.0
 MINIMAX_DEFAULT_MODEL = "speech-2.8-hd"
 MINIMAX_DEFAULT_VOICE = "male-qn-qingse"
 MINIMAX_INTERJECTIONS = {
@@ -347,7 +351,11 @@ def synthesize_minimax(text: str, output: Path, config: dict[str, Any]) -> None:
         if status_code == 0:
             break
         if status_code in MINIMAX_RETRYABLE_STATUS_CODES and attempt + 1 < attempts:
-            time.sleep(2**attempt)
+            if status_code in MINIMAX_RATE_LIMIT_STATUS_CODES:
+                # exponential backoff off a 20s base clears a one-minute window
+                time.sleep(MINIMAX_RATE_LIMIT_BACKOFF * (attempt + 1))
+            else:
+                time.sleep(2**attempt)
             continue
         trace_id = response.get("trace_id") if isinstance(response, dict) else None
         suffix = f" (trace_id={trace_id})" if trace_id else ""
