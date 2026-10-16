@@ -55,6 +55,7 @@ EXPRESSION_MAP = {
     "surprised": ("raised", "open"),
     "sad": ("worried", "frown"),
     "angry": ("angry", "frown"),
+    "worried": ("worried", "frown"),
 }
 
 DEFAULTS: dict[str, Any] = {

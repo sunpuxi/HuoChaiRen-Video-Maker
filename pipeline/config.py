@@ -24,7 +24,8 @@ ALLOWED_NOSES = {"hook", "potato", "pointy", "tiny"}
 ALLOWED_MOUTHS = {"flat", "grin", "squiggle", "open", "frown"}
 ALLOWED_OUTFITS = {"fur", "shirt", "tie", "overalls", "robe", "none"}
 ALLOWED_EARS = {"normal", "big", "none"}
-ALLOWED_EXPRESSIONS = {"neutral", "smile", "confused", "surprised", "sad", "angry"}
+ALLOWED_EXPRESSIONS = {"neutral", "smile", "confused", "surprised", "sad",
+                       "angry", "worried"}
 ALLOWED_CAMERAS = {"static", "zoom_in", "zoom_out", "pan_left", "pan_right"}
 ALLOWED_PROPS = {"arrow", "cross", "bubble", "node", "mirror", "arc", "star", "icon", "exchange"}
 ALLOWED_PROP_PRESETS = {"none", "pop", "grow"}
