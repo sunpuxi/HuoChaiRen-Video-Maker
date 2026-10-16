@@ -6,6 +6,8 @@
 
 ## 功能
 
+- 两套可切换的角色画风：线条火柴人（默认）与手绘卡通小人（见「手绘画风」）
+
 - JSON 分镜与项目配置
 - 6 种人物姿势与 6 种表情
 - 道具：箭头、双向箭头（交换）、红叉、气泡、信息节点、镜子、弧线、星形，以及羊/米/鱼/鞋等极简实物图标
@@ -194,6 +196,8 @@ StickMan-Video-Maker/
 ├── pipeline/
 │   ├── build.py
 │   ├── config.py
+│   ├── handdraw.py
+│   ├── ink.py
 │   ├── media.py
 │   └── svg.py
 ├── scripts/
@@ -271,6 +275,53 @@ cp -R projects/clothing projects/my-video
 四个开关可以单独关闭；单个镜头可用 `"background_style": false` 整体关闭，或用 `"paper_shape": "circle_top_left"` 单独指定摆位。**关闭时渲染输出与不含该功能时逐字节一致**，已有缓存不会失效。
 
 背景可以逐镜换色来形成节奏：相邻镜头使用不同底色（例如 `#FFFDF7`、`#EAF6FF`、`#F6EFE2`、`#E9F4DD`），把 `#F6B95C`、`#CFEBC3` 这类饱和度较高的颜色留给需要强调的镜头。
+
+## 手绘画风（可选）
+
+默认是线条火柴人（`art_style: "line"`）。改成 `"hand"` 后角色由引擎重绘成手绘卡通小人：豆形头、大眼、粗眉、手绘描边。
+
+```json
+{ "art_style": "hand" }
+```
+
+**每一根线都不是 `stroke`。** 线条火柴人用的是 `stroke-width="12"` 的均匀描边 —— 这正是矢量图看起来像机器画的原因。手绘引擎把每根线换成**填充轮廓**：中心线被噪声横向推移，宽度沿路径呼吸，两端收笔。噪声由稳定字符串播种（`zlib.crc32`，不是会随机化的 `hash()`），所以同一场戏每次渲染逐字节一致，三级缓存照常工作。
+
+角色是一组参数，不是硬编码图形：
+
+| 字段 | 取值 |
+|---|---|
+| `hair` | `spikes` `bowl` `ring` `flat` `afro` `combover` `none` |
+| `brow` | `worried` `angry` `raised` `flat` `unibrow`（默认由 `expression` 推导） |
+| `nose` | `hook` `potato` `pointy` `tiny` |
+| `mouth` | `flat` `grin` `squiggle` `open` `frown`（默认由 `expression` 推导） |
+| `outfit` | `fur` `shirt` `tie` `overalls` `robe` `none` |
+| `ears` | `normal` `big` `none` |
+| `hair_colour` `accent` `skin` `shirt` | 颜色 |
+
+`style` 字段可在单个角色上覆盖项目设置。所有取值都有默认值，未知值会回退而不是让渲染失败。
+
+```json
+{
+  "x": 380, "y": 300, "scale": 0.68, "pose": "point", "expression": "smile",
+  "hair": "spikes", "nose": "hook", "outfit": "fur", "shirt": "#C79A5C"
+}
+```
+
+**道具、背景层也走同一支笔。** `art_style: "hand"` 时，9 种道具（箭头、双向箭头、叉号、气泡、节点、镜子、弧线、星形、图标）以及四色纸片背景、地面线、标题下划线全部换成手绘版本，由 `pipeline/handprops.py` 绘制。否则画面里会出现「手绘的人 + 机器画的碗」，比缺功能更显眼。
+
+图标沿用原来的 0..100 盒子，所以 `size` 的含义不变；线宽按缩放倒数取值，大图标不会比小图标看起来更粗。
+
+一个容易踩的坑：`ink.chain()` 把 3 个点当作**二次曲线**。三角形的三个角如果直接丢进 `chain()`，会被弯成一片透镜形状 —— 箭头会无声地消失。需要直边的形状要用 `handprops._polygon()`。
+
+**两套画风可以共存。** 手绘人物的比例与线条人物不同，脚底落点也不同，所以地面线和投影按每个角色自己的画风取偏移（`handdraw.METRICS`），不需要为了迁就而伪造坐标。
+
+**缓存注意**：动态场景的片段是从「不含角色的底图 + 逐帧透明层」合成的，画风不会进入 `image_key`。因此切换画风时 `art_style_key()` 会把画风写进片段缓存键，否则会把旧画风的片段当成命中直接用掉。默认画风返回 `None`，已有缓存不受影响。
+
+示例项目见 `projects/hand-demo/`：
+
+```bash
+python3 render.py projects/hand-demo --preview --mute
+```
 
 ## 逐帧动画（可选）
 
