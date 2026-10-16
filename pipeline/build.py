@@ -28,6 +28,7 @@ from .media import (
 )
 from .subtitles import render_subtitle_svg, write_ass, write_srt
 from .svg import render_scene_svg
+from .tts import synthesize_dashscope_qwen3, tts_cache_signature
 
 
 @dataclass
@@ -76,9 +77,7 @@ def _ensure_audio(
         signature = {
             "kind": "tts",
             "text": scene.get("narration", ""),
-            "engine": tts.get("engine", "macos"),
-            "voice": tts.get("name", "Tingting"),
-            "rate": int(tts.get("rate", 210)),
+            "settings": tts_cache_signature(tts),
             "pipeline": PIPELINE_VERSION,
         }
 
@@ -96,33 +95,38 @@ def _ensure_audio(
     if source_path:
         convert_audio(source_path, output)
     else:
-        if tts.get("engine", "macos") != "macos":
-            raise RuntimeError("Only the macos TTS engine is currently implemented")
         text = scene.get("narration", "").strip()
         if not text:
             raise RuntimeError(f"Scene {scene['id']} has no narration for TTS")
         with tempfile.TemporaryDirectory(prefix="stickman-tts-") as temp_dir:
-            raw = Path(temp_dir) / "voice.aiff"
-            run(
-                [
-                    "say",
-                    "-v",
-                    str(tts.get("name", "Tingting")),
-                    "-r",
-                    str(int(tts.get("rate", 210))),
-                    "-o",
-                    str(raw),
-                    text,
-                ]
-            )
+            engine = tts.get("engine", "macos")
+            if engine == "dashscope_qwen3":
+                raw = Path(temp_dir) / "voice.wav"
+                synthesize_dashscope_qwen3(text, raw, tts)
+            else:
+                raw = Path(temp_dir) / "voice.aiff"
+                run(
+                    [
+                        "say",
+                        "-v",
+                        str(tts.get("name", "Tingting")),
+                        "-r",
+                        str(int(tts.get("rate", 210))),
+                        "-o",
+                        str(raw),
+                        text,
+                    ]
+                )
             try:
                 if duration(raw) <= 0 or loudness(raw)["max_volume"] < -60:
                     raise RuntimeError("generated audio is empty")
             except RuntimeError as exc:
-                raise RuntimeError(
-                    "macOS speech synthesis produced an empty track. Run outside a restricted "
-                    "sandbox or provide scene.audio_file."
-                ) from exc
+                if engine == "macos":
+                    raise RuntimeError(
+                        "macOS speech synthesis produced an empty track. Run outside a restricted "
+                        "sandbox or provide scene.audio_file."
+                    ) from exc
+                raise RuntimeError("DashScope Qwen3-TTS produced an invalid audio track") from exc
             convert_audio(raw, output)
 
     levels = loudness(output)
@@ -224,8 +228,15 @@ def build_project(
 ) -> dict[str, Any]:
     root = Path(__file__).resolve().parents[1]
     project_dir, project, scenes = resolve_project(project_path)
-    needs_tts = not muted and any(not scene.get("audio_file") for scene in scenes)
-    require_commands(["node", "ffmpeg", "ffprobe"] + (["say"] if needs_tts else []))
+    needs_tts = not muted and any(
+        any(not segment.get("audio_file") for segment in scene.get("narration_segments", []))
+        if scene.get("narration_segments")
+        else bool(scene.get("narration", "").strip()) and not scene.get("audio_file")
+        for scene in scenes
+    )
+    engine = project.get("voice", {}).get("engine", "macos")
+    needs_macos_tts = needs_tts and engine == "macos"
+    require_commands(["node", "ffmpeg", "ffprobe"] + (["say"] if needs_macos_tts else []))
     renderer = root / "scripts" / "render_svg.cjs"
     if not (root / "node_modules" / "@resvg" / "resvg-js").exists():
         raise RuntimeError(f"Renderer dependency is missing. Run `npm install` in {root}")
@@ -243,8 +254,6 @@ def build_project(
     oversample = int(project.get("motion_oversample", 4))
     if oversample < 1 or oversample > 6:
         raise ValueError("project.motion_oversample must be between 1 and 6")
-    raster_width = width * oversample
-    raster_height = height * oversample
 
     cache_dir = root / ".cache"
     build_dir = root / "builds" / project_dir.name / quality
@@ -279,7 +288,7 @@ def build_project(
                 audio, audio_duration, local_cues = _ensure_segmented_audio(
                     scene, project, project_dir, cache_dir, stats, force
                 )
-            else:
+            elif scene.get("audio_file") or scene.get("narration", "").strip():
                 audio = _ensure_audio(scene, project, project_dir, cache_dir, stats, force)
                 audio_duration = duration(audio)
         elif scene.get("narration_segments"):

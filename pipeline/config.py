@@ -4,12 +4,29 @@ import json
 import re
 from pathlib import Path
 from typing import Any, Union
+from urllib.parse import urlparse
+
+from .tts import DEFAULT_DASHSCOPE_ENDPOINT
 
 
 ALLOWED_POSES = {"stand", "look_down", "point", "arms_up", "think", "walk"}
 ALLOWED_EXPRESSIONS = {"neutral", "smile", "confused", "surprised", "sad", "angry"}
 ALLOWED_CAMERAS = {"static", "zoom_in", "zoom_out", "pan_left", "pan_right"}
 ALLOWED_PROPS = {"arrow", "cross", "bubble", "node", "mirror", "arc", "star"}
+ALLOWED_TTS_ENGINES = {"macos", "dashscope_qwen3"}
+ALLOWED_QWEN_LANGUAGES = {
+    "Auto",
+    "Chinese",
+    "English",
+    "German",
+    "Italian",
+    "Portuguese",
+    "Spanish",
+    "Japanese",
+    "Korean",
+    "French",
+    "Russian",
+}
 
 
 def load_json(path: Path) -> Any:
@@ -51,6 +68,49 @@ def validate(project: dict[str, Any], scenes: Any, project_dir: Path) -> None:
     for key, value in (("fps", project.get("fps")), ("preview.fps", preview.get("fps"))):
         if not isinstance(value, int) or value <= 0:
             errors.append(f"{key} must be a positive integer")
+
+    voice = project.get("voice", {})
+    if not isinstance(voice, dict):
+        errors.append("project.voice must be an object")
+    else:
+        engine = voice.get("engine", "macos")
+        if engine not in ALLOWED_TTS_ENGINES:
+            errors.append(f"project.voice.engine is not supported: {engine}")
+        elif engine == "macos":
+            rate = voice.get("rate", 210)
+            if not isinstance(rate, int) or rate <= 0:
+                errors.append("project.voice.rate must be a positive integer")
+        else:
+            for key, default in (("model", "qwen3-tts-flash"), ("voice", "Cherry")):
+                value = voice.get(key, default)
+                if not isinstance(value, str) or not value.strip():
+                    errors.append(f"project.voice.{key} must be a non-empty string")
+            language = voice.get("language_type", "Chinese")
+            if language not in ALLOWED_QWEN_LANGUAGES:
+                errors.append(f"project.voice.language_type is not supported: {language}")
+            api_key_env = voice.get("api_key_env", "DASHSCOPE_API_KEY")
+            if not isinstance(api_key_env, str) or not re.fullmatch(
+                r"[A-Za-z_][A-Za-z0-9_]*", api_key_env
+            ):
+                errors.append("project.voice.api_key_env must be an environment variable name")
+            endpoint = voice.get("endpoint", DEFAULT_DASHSCOPE_ENDPOINT)
+            try:
+                parsed_endpoint = urlparse(endpoint) if isinstance(endpoint, str) else None
+                valid_endpoint = bool(
+                    parsed_endpoint
+                    and parsed_endpoint.scheme in {"http", "https"}
+                    and parsed_endpoint.netloc
+                )
+            except ValueError:
+                valid_endpoint = False
+            if not valid_endpoint:
+                errors.append("project.voice.endpoint must be an HTTP(S) URL")
+            timeout = voice.get("timeout", 90)
+            if not isinstance(timeout, (int, float)) or timeout <= 0 or timeout > 300:
+                errors.append("project.voice.timeout must be greater than 0 and at most 300")
+            retries = voice.get("max_retries", 3)
+            if not isinstance(retries, int) or not 1 <= retries <= 5:
+                errors.append("project.voice.max_retries must be an integer from 1 to 5")
 
     seen: set[str] = set()
     for index, scene in enumerate(scenes):

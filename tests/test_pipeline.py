@@ -1,14 +1,31 @@
 from __future__ import annotations
 
 import json
+import os
 import tempfile
 import unittest
 import wave
 from pathlib import Path
+from unittest.mock import patch
 
 from pipeline.config import resolve_project
 from pipeline.media import _video_filter, compose_pcm_audio, duration
 from pipeline.subtitles import write_ass, write_srt
+from pipeline.tts import TTSError, synthesize_dashscope_qwen3, tts_cache_signature
+
+
+class FakeHTTPResponse:
+    def __init__(self, content: bytes):
+        self.content = content
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        return False
+
+    def read(self) -> bytes:
+        return self.content
 from pipeline.svg import render_scene_svg
 
 
@@ -108,6 +125,37 @@ class ConfigTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "cannot combine"):
                 resolve_project(root)
 
+    def test_dashscope_voice_configuration_is_validated(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "project.json").write_text(
+                json.dumps(
+                    {
+                        "resolution": [1280, 720],
+                        "fps": 30,
+                        "preview": {"resolution": [640, 360], "fps": 12},
+                        "voice": {
+                            "engine": "dashscope_qwen3",
+                            "model": "qwen3-tts-flash",
+                            "voice": "Elias",
+                            "language_type": "Chinese",
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "storyboard.json").write_text(
+                json.dumps([{"id": "api", "narration": "测试语音。"}]),
+                encoding="utf-8",
+            )
+            _, project, _ = resolve_project(root)
+            self.assertEqual(project["voice"]["engine"], "dashscope_qwen3")
+
+            project["voice"]["language_type"] = "Unsupported"
+            (root / "project.json").write_text(json.dumps(project), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "language_type"):
+                resolve_project(root)
+
 
 class SvgTests(unittest.TestCase):
     def test_scene_renders_expected_components(self) -> None:
@@ -179,6 +227,76 @@ class SubtitleTests(unittest.TestCase):
             ass_text = ass.read_text(encoding="utf-8")
             self.assertIn("PlayResX: 640", ass_text)
             self.assertIn("Dialogue: 0,0:00:00.00,0:00:01.23", ass_text)
+
+
+class TTSTests(unittest.TestCase):
+    def test_dashscope_downloads_generated_audio(self) -> None:
+        api_response = json.dumps(
+            {
+                "request_id": "request-1",
+                "output": {
+                    "audio": {
+                        "url": "https://example.aliyuncs.com/generated.wav",
+                        "data": "",
+                    }
+                },
+            }
+        ).encode("utf-8")
+        audio = b"RIFF-test-audio"
+        config = {
+            "engine": "dashscope_qwen3",
+            "model": "qwen3-tts-flash",
+            "voice": "Elias",
+            "language_type": "Chinese",
+            "max_retries": 1,
+        }
+
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / "voice.wav"
+            with patch.dict(os.environ, {"DASHSCOPE_API_KEY": "test-secret"}), patch(
+                "pipeline.tts.urlopen",
+                side_effect=[FakeHTTPResponse(api_response), FakeHTTPResponse(audio)],
+            ) as mocked_open:
+                synthesize_dashscope_qwen3("测试语音。", output, config)
+
+            self.assertEqual(output.read_bytes(), audio)
+            post_request = mocked_open.call_args_list[0].args[0]
+            payload = json.loads(post_request.data.decode("utf-8"))
+            self.assertEqual(payload["model"], "qwen3-tts-flash")
+            self.assertEqual(payload["input"]["voice"], "Elias")
+            self.assertEqual(payload["input"]["language_type"], "Chinese")
+
+    def test_dashscope_requires_api_key(self) -> None:
+        with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, {}, clear=True):
+            with self.assertRaisesRegex(TTSError, "DASHSCOPE_API_KEY"):
+                synthesize_dashscope_qwen3(
+                    "测试语音。",
+                    Path(temp) / "voice.wav",
+                    {"engine": "dashscope_qwen3"},
+                )
+
+    def test_dashscope_rejects_oversized_text_before_request(self) -> None:
+        with tempfile.TemporaryDirectory() as temp, patch.dict(
+            os.environ, {"DASHSCOPE_API_KEY": "test-secret"}
+        ):
+            with self.assertRaisesRegex(TTSError, "600-character"):
+                synthesize_dashscope_qwen3(
+                    "字" * 601,
+                    Path(temp) / "voice.wav",
+                    {"engine": "dashscope_qwen3"},
+                )
+
+    def test_tts_cache_signature_does_not_contain_credentials(self) -> None:
+        signature = tts_cache_signature(
+            {
+                "engine": "dashscope_qwen3",
+                "model": "qwen3-tts-flash",
+                "voice": "Elias",
+                "api_key_env": "PRIVATE_KEY_NAME",
+            }
+        )
+        self.assertEqual(signature["voice"], "Elias")
+        self.assertNotIn("api_key_env", signature)
 
 
 if __name__ == "__main__":

@@ -11,7 +11,7 @@
 - 箭头、红叉、气泡、信息节点、镜子、弧线和星形道具
 - `static`、`zoom_in`、`zoom_out`、`pan_left`、`pan_right` 镜头
 - 4× SVG 超采样、偶数像素裁切与缓入缓出，避免细线推镜抖动
-- macOS 本地中文 TTS，或使用每个镜头的预生成音频
+- macOS 本地中文 TTS、DashScope Qwen3-TTS API，或使用预生成音频
 - 短句级配音：每个镜头可拆成多个独立配音和字幕片段
 - 自动生成 SRT、ASS，并将带样式字幕烧录到发布视频
 - 根据真实音频长度自动计算镜头时长
@@ -25,7 +25,8 @@
 - Python 3.9+
 - Node.js 18+
 - FFmpeg 与 FFprobe
-- macOS `say`（仅在自动生成旁白时需要）
+- macOS `say`（仅使用 macOS 本地配音时需要）
+- DashScope API Key（仅使用 Qwen3-TTS 云端配音时需要）
 
 ## 安装
 
@@ -36,6 +37,38 @@ npm install
 ```
 
 项目只使用一个 Node 依赖：`@resvg/resvg-js`。Python 端不需要第三方包。
+
+## 使用 Qwen3-TTS API
+
+管线支持通过阿里云百炼的非实时 HTTP API 调用 `qwen3-tts-flash`。这种模式不需要在本机下载模型或准备 GPU。
+
+先在终端设置 API Key，不要把密钥写进项目文件：
+
+```bash
+export DASHSCOPE_API_KEY="你的 API Key"
+```
+
+然后将项目的 `voice` 配置改为：
+
+```json
+{
+  "voice": {
+    "engine": "dashscope_qwen3",
+    "model": "qwen3-tts-flash",
+    "voice": "Elias",
+    "language_type": "Chinese",
+    "api_key_env": "DASHSCOPE_API_KEY",
+    "timeout": 90,
+    "max_retries": 3
+  }
+}
+```
+
+可将 `voice` 换成 `Cherry`、`Serena`、`Neil` 等 Qwen3-TTS 系统音色。`language_type` 应尽量明确指定文本语言；中英混合或语言未知时可以使用 `Auto`。
+
+每个 `narration_segment` 会独立请求语音。返回的临时音频会立即下载、转成 48kHz 单声道 WAV，并进入内容哈希缓存；再次渲染相同文本、模型和音色时不会重复调用 API。API 遇到限流或临时服务错误时会自动重试。
+
+如果使用业务空间专属域名，可在 `voice` 中用完整的 `endpoint` 覆盖默认地址。密钥仅从 `api_key_env` 指定的环境变量读取，不会写入缓存或构建报告。
 
 ## 渲染示例
 
