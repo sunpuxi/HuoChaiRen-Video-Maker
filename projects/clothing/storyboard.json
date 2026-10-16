@@ -4,25 +4,38 @@
     "title": "你今天穿了什么？",
     "narration": "你今天穿了什么？我们每天都会穿衣服，却很少认真想过原因。",
     "narration_segments": [
-      { "text": "你今天穿了什么？", "pause_after": 0.18 },
-      { "text": "我们每天都会穿衣服，", "pause_after": 0.08 },
-      { "text": "却很少认真想过原因。", "pause_after": 0.2 }
+      {
+        "text": "你今天穿了什么？",
+        "pause_after": 0.18
+      },
+      {
+        "text": "我们每天都会穿衣服，",
+        "pause_after": 0.08
+      },
+      {
+        "text": "却很少认真想过原因。",
+        "pause_after": 0.2
+      }
     ],
-    "background": "#FFFDF7",
     "camera": "zoom_in",
     "characters": [
       {
         "x": 610,
         "y": 225,
         "scale": 0.72,
-        "rotation": 5,
         "pose": "look_down",
         "expression": "confused",
-        "shirt": "#6599D1"
+        "shirt": "#6599D1",
+        "rotation": 5
       }
     ],
     "props": [
-      { "type": "arc", "x": 155, "y": 128, "width": 180 },
+      {
+        "type": "arc",
+        "x": 155,
+        "y": 128,
+        "width": 180
+      },
       {
         "type": "arrow",
         "x1": 905,
@@ -35,12 +48,67 @@
     ]
   },
   {
-    "id": "scene_02_twist",
+    "id": "scene_02_warm",
+    "title": "当然是为了保暖？",
+    "narration": "你大概会说：当然是为了保暖。",
+    "narration_segments": [
+      {
+        "text": "你大概会说：",
+        "pause_after": 0.12
+      },
+      {
+        "text": "当然是为了保暖。",
+        "pause_after": 0.2
+      }
+    ],
+    "background": "#EAF6FF",
+    "camera": "static",
+    "characters": [
+      {
+        "x": 480,
+        "y": 250,
+        "scale": 0.68,
+        "pose": "stand",
+        "expression": "smile",
+        "shirt": "#78AEDA"
+      }
+    ],
+    "props": [
+      {
+        "type": "bubble",
+        "x": 980,
+        "y": 300,
+        "width": 240,
+        "height": 120,
+        "text": "冷"
+      },
+      {
+        "type": "star",
+        "x": 1130,
+        "y": 170,
+        "scale": 0.7
+      },
+      {
+        "type": "star",
+        "x": 150,
+        "y": 210,
+        "scale": 0.55
+      }
+    ]
+  },
+  {
+    "id": "scene_03_twist",
     "title": "只是为了保暖？",
     "narration": "也许，衣服从一开始，就不只是为了保暖。",
     "narration_segments": [
-      { "text": "也许，衣服从一开始，", "pause_after": 0.1 },
-      { "text": "就不只是为了保暖。", "pause_after": 0.2 }
+      {
+        "text": "也许，衣服从一开始，",
+        "pause_after": 0.1
+      },
+      {
+        "text": "就不只是为了保暖。",
+        "pause_after": 0.2
+      }
     ],
     "background": "#F6B95C",
     "camera": "pan_left",
@@ -55,20 +123,176 @@
       }
     ],
     "props": [
-      { "type": "cross", "x": 875, "y": 315, "size": 210 },
-      { "type": "star", "x": 170, "y": 188, "scale": 0.8 },
-      { "type": "star", "x": 1130, "y": 175, "scale": 0.65 }
+      {
+        "type": "cross",
+        "x": 875,
+        "y": 315,
+        "size": 210
+      },
+      {
+        "type": "star",
+        "x": 170,
+        "y": 188,
+        "scale": 0.8
+      },
+      {
+        "type": "star",
+        "x": 1130,
+        "y": 175,
+        "scale": 0.65
+      }
     ]
   },
   {
-    "id": "scene_03_language",
+    "id": "scene_04_fur",
+    "title": "我们本来没有厚毛皮",
+    "narration": "我们身上没有厚毛皮，最早的布料，确实是为了挡风御寒。",
+    "narration_segments": [
+      {
+        "text": "我们身上没有厚毛皮，",
+        "pause_after": 0.12
+      },
+      {
+        "text": "最早的布料，确实是为了挡风御寒。",
+        "pause_after": 0.2
+      }
+    ],
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 400,
+        "y": 265,
+        "scale": 0.6,
+        "pose": "stand",
+        "expression": "neutral",
+        "shirt": "#B77B4C",
+        "clothing": "hide"
+      },
+      {
+        "x": 900,
+        "y": 265,
+        "scale": 0.6,
+        "pose": "stand",
+        "expression": "smile",
+        "shirt": "#6599D1"
+      }
+    ],
+    "props": [
+      {
+        "type": "arrow",
+        "x1": 580,
+        "y1": 300,
+        "x2": 740,
+        "y2": 300,
+        "color": "#45A95A"
+      }
+    ]
+  },
+  {
+    "id": "scene_05_layer",
+    "title": "第二层皮肤",
+    "narration": "后来它还要挡住日晒、雨水和树枝，慢慢成了第二层皮肤。",
+    "narration_segments": [
+      {
+        "text": "后来它还要挡住日晒、雨水和树枝，",
+        "pause_after": 0.12
+      },
+      {
+        "text": "慢慢成了第二层皮肤。",
+        "pause_after": 0.2
+      }
+    ],
+    "background": "#F3E3C3",
+    "camera": "pan_right",
+    "characters": [
+      {
+        "x": 640,
+        "y": 255,
+        "scale": 0.68,
+        "pose": "walk",
+        "expression": "neutral",
+        "shirt": "#7D9FC6"
+      }
+    ],
+    "props": [
+      {
+        "type": "star",
+        "x": 210,
+        "y": 180,
+        "scale": 0.75,
+        "color": "#F5B632"
+      },
+      {
+        "type": "star",
+        "x": 1070,
+        "y": 200,
+        "scale": 0.6
+      },
+      {
+        "type": "arc",
+        "x": 640,
+        "y": 150,
+        "width": 200
+      }
+    ]
+  },
+  {
+    "id": "scene_06_mark",
+    "title": "它变成了记号",
+    "narration": "但同一时间，衣服开始变成一个记号。",
+    "narration_segments": [
+      {
+        "text": "但同一时间，",
+        "pause_after": 0.1
+      },
+      {
+        "text": "衣服开始变成一个记号。",
+        "pause_after": 0.2
+      }
+    ],
+    "camera": "zoom_out",
+    "characters": [
+      {
+        "x": 470,
+        "y": 255,
+        "scale": 0.66,
+        "pose": "point",
+        "expression": "smile",
+        "shirt": "#F0A454"
+      }
+    ],
+    "props": [
+      {
+        "type": "node",
+        "x": 1020,
+        "y": 250,
+        "radius": 80,
+        "text": "记号"
+      },
+      {
+        "type": "arrow",
+        "x1": 720,
+        "y1": 300,
+        "x2": 920,
+        "y2": 300,
+        "color": "#45A95A"
+      }
+    ]
+  },
+  {
+    "id": "scene_07_language",
     "title": "衣服也是一种语言",
     "narration": "它还是一种语言。在你开口之前，衣服已经替你表达。",
     "narration_segments": [
-      { "text": "它还是一种语言。", "pause_after": 0.15 },
-      { "text": "在你开口之前，衣服已经替你表达。", "pause_after": 0.2 }
+      {
+        "text": "它还是一种语言。",
+        "pause_after": 0.15
+      },
+      {
+        "text": "在你开口之前，衣服已经替你表达。",
+        "pause_after": 0.2
+      }
     ],
-    "background": "#FFFDF7",
     "camera": "zoom_out",
     "characters": [
       {
@@ -109,12 +333,18 @@
     ]
   },
   {
-    "id": "scene_04_identity",
+    "id": "scene_08_identity",
     "title": "它告诉别人：你是谁",
     "narration": "颜色、款式和细节，已经告诉别人你的身份、群体、态度和角色。",
     "narration_segments": [
-      { "text": "颜色、款式和细节，", "pause_after": 0.1 },
-      { "text": "已经告诉别人你的身份、群体、态度和角色。", "pause_after": 0.2 }
+      {
+        "text": "颜色、款式和细节，",
+        "pause_after": 0.1
+      },
+      {
+        "text": "已经告诉别人你的身份、群体、态度和角色。",
+        "pause_after": 0.2
+      }
     ],
     "background": "#CFEBC3",
     "camera": "pan_right",
@@ -129,27 +359,350 @@
       }
     ],
     "connections": [
-      { "x1": 350, "y1": 250, "x2": 510, "y2": 320, "width": 13 },
-      { "x1": 930, "y1": 250, "x2": 770, "y2": 320, "width": 13 },
-      { "x1": 350, "y1": 485, "x2": 510, "y2": 410, "width": 13 },
-      { "x1": 930, "y1": 485, "x2": 770, "y2": 410, "width": 13 }
+      {
+        "x1": 350,
+        "y1": 250,
+        "x2": 510,
+        "y2": 320,
+        "width": 13
+      },
+      {
+        "x1": 930,
+        "y1": 250,
+        "x2": 770,
+        "y2": 320,
+        "width": 13
+      },
+      {
+        "x1": 350,
+        "y1": 485,
+        "x2": 510,
+        "y2": 410,
+        "width": 13
+      },
+      {
+        "x1": 930,
+        "y1": 485,
+        "x2": 770,
+        "y2": 410,
+        "width": 13
+      }
     ],
     "props": [
-      { "type": "node", "x": 240, "y": 235, "text": "身份" },
-      { "type": "node", "x": 1040, "y": 235, "text": "群体" },
-      { "type": "node", "x": 240, "y": 495, "text": "态度" },
-      { "type": "node", "x": 1040, "y": 495, "text": "角色" }
+      {
+        "type": "node",
+        "x": 240,
+        "y": 235,
+        "text": "身份"
+      },
+      {
+        "type": "node",
+        "x": 1040,
+        "y": 235,
+        "text": "群体"
+      },
+      {
+        "type": "node",
+        "x": 240,
+        "y": 495,
+        "text": "态度"
+      },
+      {
+        "type": "node",
+        "x": 1040,
+        "y": 495,
+        "text": "角色"
+      }
     ]
   },
   {
-    "id": "scene_05_close",
-    "title": "你选择的，不只是衣服",
-    "narration": "所以你选择的，不只是衣服，而是你想如何被世界看见。",
+    "id": "scene_09_uniform",
+    "title": "同一件衣服，不同队伍",
+    "narration": "同一件衣服穿在谁身上，意思也不一样：它可以是队服，也可以是制服。",
     "narration_segments": [
-      { "text": "所以你选择的，不只是衣服，", "pause_after": 0.1 },
-      { "text": "而是你想如何被世界看见。", "pause_after": 0.2 }
+      {
+        "text": "同一件衣服穿在谁身上，",
+        "pause_after": 0.1
+      },
+      {
+        "text": "意思也不一样：",
+        "pause_after": 0.08
+      },
+      {
+        "text": "它可以是队服，也可以是制服。",
+        "pause_after": 0.2
+      }
     ],
-    "background": "#FFFDF7",
+    "background": "#EAF6FF",
+    "camera": "static",
+    "characters": [
+      {
+        "x": 390,
+        "y": 265,
+        "scale": 0.58,
+        "pose": "stand",
+        "expression": "smile",
+        "shirt": "#6599D1"
+      },
+      {
+        "x": 640,
+        "y": 265,
+        "scale": 0.58,
+        "pose": "walk",
+        "expression": "neutral",
+        "shirt": "#6599D1"
+      },
+      {
+        "x": 890,
+        "y": 265,
+        "scale": 0.58,
+        "pose": "stand",
+        "expression": "smile",
+        "shirt": "#6599D1"
+      }
+    ],
+    "props": [
+      {
+        "type": "arc",
+        "x": 640,
+        "y": 140,
+        "width": 240
+      }
+    ]
+  },
+  {
+    "id": "scene_10_occasion",
+    "title": "换个场合，意思就变了",
+    "narration": "换个场合，同一件衣服，意思可能完全相反。",
+    "narration_segments": [
+      {
+        "text": "换个场合，同一件衣服，",
+        "pause_after": 0.12
+      },
+      {
+        "text": "意思可能完全相反。",
+        "pause_after": 0.2
+      }
+    ],
+    "camera": "pan_left",
+    "characters": [
+      {
+        "x": 400,
+        "y": 265,
+        "scale": 0.6,
+        "pose": "stand",
+        "expression": "smile",
+        "shirt": "#7D9FC6"
+      },
+      {
+        "x": 900,
+        "y": 265,
+        "scale": 0.6,
+        "pose": "stand",
+        "expression": "surprised",
+        "shirt": "#7D9FC6"
+      }
+    ],
+    "props": [
+      {
+        "type": "node",
+        "x": 150,
+        "y": 250,
+        "radius": 70,
+        "text": "日常"
+      },
+      {
+        "type": "node",
+        "x": 1140,
+        "y": 250,
+        "radius": 70,
+        "text": "典礼"
+      }
+    ]
+  },
+  {
+    "id": "scene_11_rule",
+    "title": "规矩，还是破例？",
+    "narration": "有些场合要求你守规矩，有些场合允许你打破它。",
+    "narration_segments": [
+      {
+        "text": "有些场合要求你守规矩，",
+        "pause_after": 0.12
+      },
+      {
+        "text": "有些场合允许你打破它。",
+        "pause_after": 0.2
+      }
+    ],
+    "background": "#F3E3C3",
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 260,
+        "scale": 0.66,
+        "pose": "arms_up",
+        "expression": "surprised",
+        "shirt": "#E4574F"
+      }
+    ],
+    "props": [
+      {
+        "type": "cross",
+        "x": 300,
+        "y": 330,
+        "size": 150
+      },
+      {
+        "type": "star",
+        "x": 1010,
+        "y": 220,
+        "scale": 0.85,
+        "color": "#F5B632"
+      }
+    ]
+  },
+  {
+    "id": "scene_12_break",
+    "title": "不用说话的表态",
+    "narration": "破洞、混搭、亮色，都是不用说话的表态。",
+    "narration_segments": [
+      {
+        "text": "破洞、混搭、亮色，",
+        "pause_after": 0.12
+      },
+      {
+        "text": "都是不用说话的表态。",
+        "pause_after": 0.2
+      }
+    ],
+    "camera": "pan_right",
+    "characters": [
+      {
+        "x": 640,
+        "y": 260,
+        "scale": 0.7,
+        "pose": "point",
+        "expression": "smile",
+        "shirt": "#E4574F"
+      }
+    ],
+    "props": [
+      {
+        "type": "star",
+        "x": 220,
+        "y": 200,
+        "scale": 0.9,
+        "color": "#F5B632"
+      },
+      {
+        "type": "star",
+        "x": 1080,
+        "y": 210,
+        "scale": 0.7,
+        "color": "#45A95A"
+      },
+      {
+        "type": "arc",
+        "x": 640,
+        "y": 140,
+        "width": 200
+      }
+    ]
+  },
+  {
+    "id": "scene_13_cycle",
+    "title": "过时，又会回来",
+    "narration": "所以衣服会过时，也会回来；变的是符号，不是布。",
+    "narration_segments": [
+      {
+        "text": "所以衣服会过时，也会回来；",
+        "pause_after": 0.12
+      },
+      {
+        "text": "变的是符号，不是布。",
+        "pause_after": 0.2
+      }
+    ],
+    "background": "#E9F4DD",
+    "camera": "zoom_out",
+    "characters": [
+      {
+        "x": 640,
+        "y": 260,
+        "scale": 0.68,
+        "pose": "walk",
+        "expression": "neutral",
+        "shirt": "#7D9FC6"
+      }
+    ],
+    "props": [
+      {
+        "type": "arc",
+        "x": 300,
+        "y": 180,
+        "width": 180,
+        "color": "#F5B632"
+      },
+      {
+        "type": "arc",
+        "x": 980,
+        "y": 180,
+        "width": 180,
+        "color": "#F5B632"
+      }
+    ]
+  },
+  {
+    "id": "scene_14_question",
+    "title": "其实是在回答问题",
+    "narration": "你每天选的那一套，其实都在回答同一个问题：",
+    "narration_segments": [
+      {
+        "text": "你每天选的那一套，",
+        "pause_after": 0.12
+      },
+      {
+        "text": "其实都在回答同一个问题：",
+        "pause_after": 0.2
+      }
+    ],
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 600,
+        "y": 265,
+        "scale": 0.66,
+        "pose": "think",
+        "expression": "confused",
+        "shirt": "#F0A454"
+      }
+    ],
+    "props": [
+      {
+        "type": "bubble",
+        "x": 1010,
+        "y": 250,
+        "width": 250,
+        "height": 125,
+        "text": "？"
+      }
+    ]
+  },
+  {
+    "id": "scene_15_mirror",
+    "title": "你想被看成什么样子？",
+    "narration": "你想以什么样子，出现在别人面前？",
+    "narration_segments": [
+      {
+        "text": "你想以什么样子，",
+        "pause_after": 0.15
+      },
+      {
+        "text": "出现在别人面前？",
+        "pause_after": 0.2
+      }
+    ],
     "camera": "zoom_in",
     "characters": [
       {
@@ -162,8 +715,66 @@
       }
     ],
     "props": [
-      { "type": "mirror", "x": 895, "y": 350, "width": 255, "height": 370 },
-      { "type": "arc", "x": 640, "y": 185, "width": 170 }
+      {
+        "type": "mirror",
+        "x": 895,
+        "y": 350,
+        "width": 255,
+        "height": 370
+      },
+      {
+        "type": "arc",
+        "x": 640,
+        "y": 185,
+        "width": 170
+      }
+    ]
+  },
+  {
+    "id": "scene_16_close",
+    "title": "你想如何被世界看见",
+    "narration": "所以你选择的，不只是衣服，而是你想如何被世界看见。",
+    "narration_segments": [
+      {
+        "text": "所以你选择的，不只是衣服，",
+        "pause_after": 0.12
+      },
+      {
+        "text": "而是你想如何被世界看见。",
+        "pause_after": 0.2
+      }
+    ],
+    "camera": "zoom_in",
+    "characters": [
+      {
+        "x": 640,
+        "y": 255,
+        "scale": 0.7,
+        "pose": "stand",
+        "expression": "smile",
+        "shirt": "#6599D1"
+      }
+    ],
+    "props": [
+      {
+        "type": "star",
+        "x": 250,
+        "y": 200,
+        "scale": 0.8,
+        "color": "#F5B632"
+      },
+      {
+        "type": "star",
+        "x": 1030,
+        "y": 200,
+        "scale": 0.7
+      },
+      {
+        "type": "arc",
+        "x": 640,
+        "y": 150,
+        "width": 220
+      }
     ]
   }
 ]

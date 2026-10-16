@@ -46,7 +46,7 @@ class ConfigTests(unittest.TestCase):
         project_dir, project, scenes = resolve_project(root / "projects" / "clothing")
         self.assertEqual(project_dir.name, "clothing")
         self.assertEqual(project["fps"], 30)
-        self.assertEqual(len(scenes), 5)
+        self.assertEqual(len(scenes), 16)
 
     def test_unsafe_scene_id_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
