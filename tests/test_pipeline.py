@@ -1393,3 +1393,34 @@ class SpriteStyleTests(unittest.TestCase):
             _, project, _ = resolve_project(root)
             self.assertEqual(project["art_style"], "sprite")
             self.assertEqual(project["_dir"], str(root.resolve()))
+
+
+class WorriedExpressionTests(unittest.TestCase):
+    """The sprite atlas carries a `worried` face; the schema has to allow it."""
+
+    def test_worried_is_a_supported_expression(self) -> None:
+        self.assertIn("worried", ALLOWED_EXPRESSIONS)
+
+    def test_worried_has_a_hand_drawn_mapping(self) -> None:
+        spec = handdraw.spec_of({"expression": "worried"})
+        self.assertEqual(spec["brow"], "worried")
+        self.assertEqual(spec["mouth"], "frown")
+
+    def test_storyboard_schema_lists_worried(self) -> None:
+        schema = json.loads((Path(__file__).resolve().parents[1]
+                             / "storyboard.schema.json").read_text(encoding="utf-8"))
+        enum = schema["items"]["properties"]["characters"]["items"]["properties"]["expression"]["enum"]
+        self.assertEqual(set(enum), ALLOWED_EXPRESSIONS)
+
+
+class MiniMaxRateLimitTests(unittest.TestCase):
+
+    def test_rate_limit_codes_get_a_window_sized_backoff(self) -> None:
+        # 1002 is a per-minute request limit: a 2s exponential backoff never
+        # clears the window, which is what stalled a 77-scene render.
+        from pipeline.tts import (MINIMAX_RATE_LIMIT_BACKOFF,
+                                  MINIMAX_RATE_LIMIT_STATUS_CODES,
+                                  MINIMAX_RETRYABLE_STATUS_CODES)
+        self.assertEqual(MINIMAX_RATE_LIMIT_STATUS_CODES, {1002, 1039})
+        self.assertLessEqual(MINIMAX_RATE_LIMIT_STATUS_CODES, MINIMAX_RETRYABLE_STATUS_CODES)
+        self.assertGreaterEqual(MINIMAX_RATE_LIMIT_BACKOFF, 20.0)
